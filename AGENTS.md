@@ -12,7 +12,7 @@ AltShift burns down accessibility debt in storefront source code. On a schedule 
 
 We do not sell detection. Free tools already do that. We scan only so the fix engine has findings and so the rescan gate can work.
 
-**Current milestone: M1 is built and waiting for the maintainer's review** (scan engine, fingerprints, Nuxt fixture, `altshift scan`). M2, the fix engine, is next (`docs/internal/SPEC.md` section 17). Do not start it until the maintainer asks. The M0 kill test runs in parallel by maintainer decision, and its work lives in `docs/internal/research/m0/`.
+**Current milestone: M2, the fix engine** (`docs/internal/SPEC.md` section 17). M1 is built. The first half of M2 is built too: the Nuxt adapter, agent tools, gates, workspace and triage, none of which call a model. The second half (agent loop, `fix --dry-run`, evals) needs an API key and eval spend, so do not start it until the maintainer asks. The M0 kill test runs in parallel by maintainer decision, and its work lives in `docs/internal/research/m0/`.
 
 The whole repo is MIT licensed.
 

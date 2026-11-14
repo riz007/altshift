@@ -16,6 +16,8 @@ const appSchema = z.strictObject({
     .optional(),
   build: z.string().min(1).optional(),
   checks: z.array(z.string().min(1)).default([]),
+  /** Limit for each check command and for the build. */
+  commandTimeoutSeconds: z.number().int().positive().default(600),
 });
 
 // Paths only. The origin always comes from app.dev.url, so a config cannot point a scan at another site.
@@ -36,9 +38,16 @@ const scanSchema = z.strictObject({
   tags: z.array(z.string().min(1)).min(1).default(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"]),
 });
 
+// These spellings would silently match nothing, which for denyPaths means failing open.
+const pathGlob = z
+  .string()
+  .min(1)
+  .regex(/^[^!/]/, 'Globs are relative to the project root: no leading "/" or "!"')
+  .regex(/^[^[\]]*$/, "Character classes ([abc]) are not supported in path globs");
+
 const fixSchema = z.strictObject({
-  allowPaths: z.array(z.string()).default(["app/**", "pages/**", "components/**", "src/**", "layouts/**"]),
-  denyPaths: z.array(z.string()).default(["**/*.test.*", "**/*.spec.*", "public/**"]),
+  allowPaths: z.array(pathGlob).default(["app/**", "pages/**", "components/**", "src/**", "layouts/**"]),
+  denyPaths: z.array(pathGlob).default(["**/*.test.*", "**/*.spec.*", "public/**"]),
   maxFixesPerRun: z.number().int().positive().max(50).default(10),
   maxAttemptsPerFinding: z.number().int().min(1).max(3).default(2),
   budgetUsd: z.number().positive().max(100).default(5),

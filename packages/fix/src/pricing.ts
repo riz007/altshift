@@ -20,9 +20,7 @@ export interface Usage {
 
 export class UnknownPriceError extends Error {
   constructor(readonly model: string) {
-    super(
-      `No price for ${model} in packages/fix/src/pricing.ts. Add it from docs.claude.com before running fixes.`,
-    );
+    super(`No price for ${model} in packages/fix/src/pricing.ts. Add it from docs.claude.com before running fixes.`);
     this.name = "UnknownPriceError";
   }
 }
@@ -34,8 +32,7 @@ export function costUsd(model: string, usage: Usage): number {
   return (
     usage.input_tokens * perToken(price.inputPerMTok) +
     usage.output_tokens * perToken(price.outputPerMTok) +
-    (usage.cache_creation_input_tokens ?? 0) *
-      perToken(price.cacheWritePerMTok) +
+    (usage.cache_creation_input_tokens ?? 0) * perToken(price.cacheWritePerMTok) +
     (usage.cache_read_input_tokens ?? 0) * perToken(price.cacheReadPerMTok)
   );
 }

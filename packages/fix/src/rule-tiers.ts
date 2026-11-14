@@ -16,9 +16,6 @@ export const DEFAULT_RULE_TIERS: Readonly<Record<string, FixTier>> = {
   "aria-valid-attr-value": "auto",
   "aria-hidden-focus": "auto",
   "aria-dialog-name": "auto",
-  "html-has-lang": "auto",
-  "html-lang-valid": "auto",
-  "document-title": "auto",
   "frame-title": "auto",
   list: "auto",
   listitem: "auto",
@@ -38,6 +35,11 @@ export const DEFAULT_RULE_TIERS: Readonly<Record<string, FixTier>> = {
   "scrollable-region-focusable": "suggest",
   "meta-viewport": "suggest",
   "heading-order": "suggest",
+
+  // Fixed in script or config (useHead, nuxt.config), which automatic fixes may not touch.
+  "html-has-lang": "suggest",
+  "html-lang-valid": "suggest",
+  "document-title": "suggest",
 
   // Needs content only a person can supply.
   "video-caption": "report",

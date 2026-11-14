@@ -22,6 +22,8 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^1.8.0",
     "@altshift/adapters": "workspace:*",
-    "altshift": "workspace:*"
+    "altshift": "workspace:*",
+    "playwright": "^1.65.1",
+    "zod": "^4.6.7"
   }
 }

@@ -44,8 +44,8 @@ export interface FrameworkAdapter {
   displayName: string;
   detect(repoRoot: string): Promise<DetectResult | null>;
   defaults: AdapterDefaults;
-  /** Runs against the dev server. Must not throw: return [] when nothing is found. */
-  collectSourceHints(page: Page, selector: string): Promise<SourceHint[]>;
+  /** Runs against the dev server. Must not throw: return [] when nothing is found. Files are repo-relative. */
+  collectSourceHints(page: Page, selector: string, repoRoot: string): Promise<SourceHint[]>;
   /** Short Markdown added to the fix prompt. Keep under 25 lines. */
   promptNotes: string;
 }

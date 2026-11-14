@@ -12,6 +12,9 @@
     "vue": "3.5.45"
   },
   "devDependencies": {
-    "altshift": "workspace:*"
+    "@altshift/adapters": "workspace:*",
+    "@altshift/fix": "workspace:*",
+    "altshift": "workspace:*",
+    "playwright": "^1.65.1"
   }
 }

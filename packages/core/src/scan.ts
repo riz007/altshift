@@ -22,6 +22,15 @@ export interface ScanInput {
   engine: ScanEngine;
   tags: string[];
   exclude: string[];
+  /** Runs at every checkpoint while the page is still in that state, e.g. for screenshots or source hints. */
+  onCheckpoint?: (checkpoint: CheckpointContext) => Promise<void>;
+}
+
+export interface CheckpointContext {
+  page: Page;
+  target: string;
+  checkpoint: string;
+  findings: Finding[];
 }
 
 const SETTLE_TIMEOUT_MS = 5000;
@@ -89,7 +98,9 @@ export async function scanTargets(input: ScanInput): Promise<ScanReport> {
     engineVersion = result.engineVersion;
     const where = { engine: input.engine.id, target, checkpoint, url: page.url() };
     scanned.push({ target, checkpoint, url: where.url });
-    for (const raw of result.findings) findings.push(toFinding(raw, where));
+    const found = result.findings.map((raw) => toFinding(raw, where));
+    findings.push(...found);
+    await input.onCheckpoint?.({ page, target, checkpoint, findings: found });
   };
 
   // A fresh context per target, so cookies and storage from one never leak into the next.

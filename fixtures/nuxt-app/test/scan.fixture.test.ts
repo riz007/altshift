@@ -1,6 +1,16 @@
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
-import { runScan, type ScanReport } from "altshift";
+import { nuxtAdapter, type SourceHint } from "@altshift/adapters";
+import {
+  axeEngine,
+  type Finding,
+  loadConfig,
+  loadJourneys,
+  type ScanReport,
+  scanTargets,
+  startDevServer,
+} from "altshift";
+import { chromium } from "playwright";
 import { beforeAll, describe, expect, it } from "vitest";
 
 interface Seed {
@@ -17,12 +27,41 @@ const key = (item: { target: string; checkpoint: string; ruleId: string }) =>
 
 let seeds: Seed[];
 let report: ScanReport;
+const hints = new Map<string, SourceHint[]>();
 
+// Same steps as runScan, plus the checkpoint hook the fix engine uses to collect source hints.
 beforeAll(async () => {
   seeds = JSON.parse(await readFile(resolve(root, "seeds.json"), "utf8"));
-  const result = await runScan({ cwd: root });
-  if (!result.ok) throw new Error(result.error.message);
-  report = result.value.report;
+
+  const loaded = await loadConfig(root);
+  if (!loaded.ok) throw new Error(loaded.error.message);
+  const { config } = loaded.value;
+  if (!config.app.dev) throw new Error("fixture config has no app.dev");
+  const journeys = await loadJourneys(root, config.targets.journeys);
+  if (!journeys.ok) throw new Error(journeys.error.message);
+  const server = await startDevServer({ ...config.app.dev, cwd: root });
+  if (!server.ok) throw new Error(server.error.message);
+
+  const browser = await chromium.launch();
+  try {
+    report = await scanTargets({
+      browser,
+      baseUrl: config.app.dev.url,
+      pages: config.targets.pages,
+      journeys: journeys.value,
+      engine: axeEngine,
+      tags: config.scan.tags,
+      exclude: config.targets.exclude,
+      onCheckpoint: async ({ page, findings }) => {
+        for (const finding of findings) {
+          hints.set(finding.fingerprint, await nuxtAdapter.collectSourceHints(page, finding.selector, root));
+        }
+      },
+    });
+  } finally {
+    await browser.close();
+    await server.value.stop();
+  }
 });
 
 describe("nuxt fixture scan", () => {
@@ -64,5 +103,18 @@ describe("nuxt fixture scan", () => {
         `altshift-seed: ${seed.ruleId} `,
       );
     }
+  });
+
+  it("points every finding at the component that holds its seed", () => {
+    const seedFile = (finding: Finding) => seeds.find((seed) => key(seed) === key(finding))?.file;
+    const wrong = report.findings
+      .map((finding) => ({
+        rule: key(finding),
+        expected: seedFile(finding),
+        got: hints.get(finding.fingerprint)?.[0]?.file,
+      }))
+      .filter((item) => item.expected !== item.got);
+
+    expect(wrong).toEqual([]);
   });
 });

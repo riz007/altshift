@@ -39,6 +39,12 @@ describe("resolveConfig", () => {
     expect(() => resolveConfig({ scan: { engine: "lighthouse" } })).toThrow();
   });
 
+  it("rejects path globs that would silently match nothing", () => {
+    for (const glob of ["/src/legacy/**", "!app/**", "**/[Ss]ecret*", ""]) {
+      expect(() => resolveConfig({ fix: { denyPaths: [glob] } }), glob).toThrow();
+    }
+  });
+
   it("rejects an unknown fix tier", () => {
     expect(() => resolveConfig({ fix: { ruleTiers: { "image-alt": "yolo" } } })).toThrow();
   });

@@ -12,6 +12,12 @@ describe("tierFor", () => {
     expect(tierFor("image-alt")).toBe("auto-review");
   });
 
+  it("only proposes fixes that live outside the template", () => {
+    for (const rule of ["html-has-lang", "html-lang-valid", "document-title"]) {
+      expect(tierFor(rule), rule).toBe("suggest");
+    }
+  });
+
   it("lets config override a default", () => {
     expect(tierFor("color-contrast", { "color-contrast": "report" })).toBe("report");
   });

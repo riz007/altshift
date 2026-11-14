@@ -44,7 +44,7 @@ flowchart LR
     class C,D,E,F,G,H,I,J,K planned
 ```
 
-Solid boxes are built. Dashed boxes are on the [roadmap](#roadmap).
+Solid boxes run end to end today. Dashed boxes are on the [roadmap](#roadmap): the gates and triage exist and are tested, but nothing drives them yet.
 
 ### The gates
 
@@ -71,18 +71,18 @@ Each axe rule sits in a tier that decides how far AltShift is allowed to go. Rul
 
 ```mermaid
 pie showData title Default tiers for the 31 rules AltShift knows
-    "auto: fix, gate, deliver" : 19
+    "auto: fix, gate, deliver" : 16
     "auto-review: fix, gate, label as draft" : 5
-    "suggest: propose only, never applied" : 5
+    "suggest: propose only, never applied" : 8
     "report: explain only" : 2
 ```
 
-| Tier          | What happens                                                                   | Examples                                                               |
-| ------------- | ------------------------------------------------------------------------------ | ---------------------------------------------------------------------- |
-| `auto`        | Fixed, gated and delivered                                                     | `button-name`, `link-name`, `label`, `select-name`, `list`, ARIA rules |
-| `auto-review` | Fixed and gated. The text the model wrote is marked "Draft: please review."    | `image-alt`, `svg-img-alt`                                             |
-| `suggest`     | A proposed diff in the evidence pack. Never applied, because it changes design | `color-contrast`, `target-size`                                        |
-| `report`      | Explained only. Needs content a person must supply                             | `video-caption`, any unknown rule                                      |
+| Tier          | What happens                                                                                                      | Examples                                                               |
+| ------------- | ----------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| `auto`        | Fixed, gated and delivered                                                                                        | `button-name`, `link-name`, `label`, `select-name`, `list`, ARIA rules |
+| `auto-review` | Fixed and gated. The text the model wrote is marked "Draft: please review."                                       | `image-alt`, `svg-img-alt`                                             |
+| `suggest`     | A proposed diff in the evidence pack. Never applied, because it changes design or needs code outside the template | `color-contrast`, `target-size`, `document-title`                      |
+| `report`      | Explained only. Needs content a person must supply                                                                | `video-caption`, any unknown rule                                      |
 
 You can move a rule to a stricter or looser tier in config.
 
@@ -96,7 +96,10 @@ You can move a rule to a stricter or looser tier in config.
 | Stable finding fingerprints and deterministic JSON reports   | Built   |
 | `altshift scan`                                              | Built   |
 | Nuxt 4 fixture storefront with seeded violations             | Built   |
-| Fix engine: triage, agent tools, gates, model routing        | Next    |
+| Nuxt adapter: maps a failing element to its component file   | Built   |
+| Agent tools and path guard (read-only, staged edits)         | Built   |
+| The six gates, triage and the fix workspace                  | Built   |
+| Agent loop, model routing, cost meter                        | Next    |
 | `altshift fix --dry-run`, fix evals                          | Next    |
 | Pull request delivery, evidence pack, GitHub Action          | Planned |
 | Next.js adapter, AccessLint engine, SARIF import             | Planned |
@@ -245,7 +248,7 @@ It is also not an overlay. It changes your source code through pull requests and
 | Milestone | Scope                                                                                | State   |
 | --------- | ------------------------------------------------------------------------------------ | ------- |
 | 1         | Scan engine, targets and journeys, fingerprints, `altshift scan`, Nuxt fixture       | Built   |
-| 2         | Nuxt adapter, fix engine with tools, gates and model routing, `fix --dry-run`, evals | Next    |
+| 2         | Nuxt adapter, fix engine with tools, gates and model routing, `fix --dry-run`, evals | Partly  |
 | 3         | Pull request delivery, evidence pack, GitHub Action                                  | Planned |
 | 4         | Next.js adapter, AccessLint engine option, SARIF import                              | Planned |
 | 5         | Fix-on-label for open pull requests                                                  | Planned |

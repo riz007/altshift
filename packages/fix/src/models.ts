@@ -21,11 +21,7 @@ export function resolveModels(
 ): ModelRouting {
   return {
     fix: env.ALTSHIFT_MODEL_FIX || fromConfig.fix || DEFAULT_MODELS.fix,
-    triage:
-      env.ALTSHIFT_MODEL_TRIAGE || fromConfig.triage || DEFAULT_MODELS.triage,
-    fallback:
-      env.ALTSHIFT_MODEL_FALLBACK ||
-      fromConfig.fallback ||
-      DEFAULT_MODELS.fallback,
+    triage: env.ALTSHIFT_MODEL_TRIAGE || fromConfig.triage || DEFAULT_MODELS.triage,
+    fallback: env.ALTSHIFT_MODEL_FALLBACK || fromConfig.fallback || DEFAULT_MODELS.fallback,
   };
 }

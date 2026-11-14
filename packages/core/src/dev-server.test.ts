@@ -35,6 +35,8 @@ describe("startDevServer", () => {
   });
 
   it("reuses a server that is already running and leaves it running", async () => {
+    const ci = process.env.CI;
+    delete process.env.CI;
     const existing = createServer((_request, response) => response.end("ok"));
     await new Promise<void>((done) => existing.listen(0, "127.0.0.1", done));
     const url = `http://127.0.0.1:${(existing.address() as AddressInfo).port}/`;
@@ -45,6 +47,23 @@ describe("startDevServer", () => {
     if (server.ok) await server.value.stop();
     expect(await isUp(url)).toBe(true);
     await new Promise((done) => existing.close(done));
+    if (ci !== undefined) process.env.CI = ci;
+  });
+
+  it("refuses to reuse a running server in CI", async () => {
+    const existing = createServer((_request, response) => response.end("ok"));
+    await new Promise<void>((done) => existing.listen(0, "127.0.0.1", done));
+    const url = `http://127.0.0.1:${(existing.address() as AddressInfo).port}/`;
+    const before = process.env.CI;
+    process.env.CI = "true";
+    try {
+      const server = await startDevServer({ command: "exit 1", url, readyTimeoutSeconds: 5, cwd: process.cwd() });
+      expect(!server.ok && server.error.message).toContain("already listening");
+    } finally {
+      if (before === undefined) delete process.env.CI;
+      else process.env.CI = before;
+      await new Promise((done) => existing.close(done));
+    }
   });
 
   it("fails with the command output when the command exits early", async () => {
