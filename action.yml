@@ -1,0 +1,71 @@
+name: AltShift
+description: Fixes accessibility findings in storefront source code and opens one pull request with gated fixes and an evidence pack.
+author: Rudra
+branding:
+  icon: check-circle
+  color: blue
+
+inputs:
+  mode:
+    description: "debt (scheduled or manual run) or pr"
+    default: debt
+  config:
+    description: Config path
+    default: altshift.config.ts
+  anthropic-api-key:
+    description: Anthropic API key (bring your own key)
+    required: false
+  license-key:
+    description: Reserved for a later hosted plan
+    required: false
+  github-token:
+    description: GitHub API access
+    default: ${{ github.token }}
+  max-fixes:
+    description: Override fix.maxFixesPerRun
+    required: false
+  budget-usd:
+    description: Override fix.budgetUsd
+    required: false
+
+outputs:
+  fixes-accepted:
+    description: Fixes that passed every gate
+    value: ${{ steps.run.outputs.fixes-accepted }}
+  fixes-rejected:
+    description: Fixes dropped because a gate failed
+    value: ${{ steps.run.outputs.fixes-rejected }}
+  fixes-suggested:
+    description: Proposals listed in the evidence pack and not applied
+    value: ${{ steps.run.outputs.fixes-suggested }}
+  cost-usd:
+    description: Model cost of the run
+    value: ${{ steps.run.outputs.cost-usd }}
+  pr-url:
+    description: The pull request that was opened or updated
+    value: ${{ steps.run.outputs.pr-url }}
+  evidence-path:
+    description: Path of the evidence pack
+    value: ${{ steps.run.outputs.evidence-path }}
+
+runs:
+  using: composite
+  steps:
+    # Pin this to the lockfile's Playwright version once the Action ships.
+    - name: Install Chromium for Playwright
+      shell: bash
+      run: npx -y playwright@1 install --with-deps chromium
+
+    - name: Run AltShift
+      id: run
+      shell: bash
+      run: node "$GITHUB_ACTION_PATH/packages/action/dist/index.js"
+      # Composite actions do not set INPUT_* on their own.
+      env:
+        INPUT_MODE: ${{ inputs.mode }}
+        INPUT_CONFIG: ${{ inputs.config }}
+        INPUT_ANTHROPIC-API-KEY: ${{ inputs.anthropic-api-key }}
+        INPUT_LICENSE-KEY: ${{ inputs.license-key }}
+        INPUT_GITHUB-TOKEN: ${{ inputs.github-token }}
+        INPUT_MAX-FIXES: ${{ inputs.max-fixes }}
+        INPUT_BUDGET-USD: ${{ inputs.budget-usd }}

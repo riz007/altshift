@@ -1,0 +1,21 @@
+{
+  "name": "@altshift/cli",
+  "version": "0.0.0",
+  "description": "altshift command line.",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "altshift": "./dist/index.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup src/index.ts --format esm --clean",
+    "typecheck": "tsc --noEmit -p ."
+  },
+  "dependencies": {
+    "@altshift/fix": "workspace:*",
+    "altshift": "workspace:*"
+  }
+}

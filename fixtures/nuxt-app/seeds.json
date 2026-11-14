@@ -1,0 +1,60 @@
+[
+  {
+    "target": "/",
+    "checkpoint": "load",
+    "ruleId": "button-name",
+    "count": 4,
+    "file": "app/components/ProductCard.vue"
+  },
+  { "target": "/", "checkpoint": "load", "ruleId": "label", "count": 1, "file": "app/components/NewsletterForm.vue" },
+  { "target": "/", "checkpoint": "load", "ruleId": "link-name", "count": 1, "file": "app/components/PromoBanner.vue" },
+  {
+    "target": "/products/trail-mug",
+    "checkpoint": "load",
+    "ruleId": "color-contrast",
+    "count": 1,
+    "file": "app/pages/products/[slug].vue"
+  },
+  {
+    "target": "/products/trail-mug",
+    "checkpoint": "load",
+    "ruleId": "image-alt",
+    "count": 1,
+    "file": "app/pages/products/[slug].vue"
+  },
+  {
+    "target": "/products/trail-mug",
+    "checkpoint": "load",
+    "ruleId": "list",
+    "count": 1,
+    "file": "app/components/SpecList.vue"
+  },
+  {
+    "target": "/products/trail-mug",
+    "checkpoint": "load",
+    "ruleId": "select-name",
+    "count": 1,
+    "file": "app/components/SizePicker.vue"
+  },
+  {
+    "target": "cart-open",
+    "checkpoint": "drawer",
+    "ruleId": "button-name",
+    "count": 1,
+    "file": "app/components/CartDrawer.vue"
+  },
+  {
+    "target": "checkout-errors",
+    "checkpoint": "errors",
+    "ruleId": "aria-required-attr",
+    "count": 1,
+    "file": "app/pages/checkout.vue"
+  },
+  {
+    "target": "checkout-errors",
+    "checkpoint": "errors",
+    "ruleId": "color-contrast",
+    "count": 3,
+    "file": "app/pages/checkout.vue"
+  }
+]

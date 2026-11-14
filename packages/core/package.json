@@ -1,0 +1,26 @@
+{
+  "name": "altshift",
+  "version": "0.0.0",
+  "description": "AltShift core: config, scan engine, findings and fingerprints.",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": {
+      "source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup src/index.ts --format esm --dts --clean",
+    "typecheck": "tsc --noEmit -p ."
+  },
+  "dependencies": {
+    "@axe-core/playwright": "^4.14.0",
+    "playwright": "^1.65.1",
+    "zod": "^4.6.7"
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "name": "@altshift/github",
+  "version": "0.0.0",
+  "description": "Pull request delivery and Markdown escaping for AltShift.",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": {
+      "source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup src/index.ts --format esm --dts --clean",
+    "typecheck": "tsc --noEmit -p ."
+  },
+  "dependencies": {
+    "@actions/github": "^9.1.1",
+    "altshift": "workspace:*"
+  }
+}

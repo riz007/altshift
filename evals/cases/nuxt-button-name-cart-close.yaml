@@ -1,0 +1,21 @@
+# Example case. The eval runner arrives with the fix engine.
+id: nuxt-button-name-cart-close
+fixture: nuxt-app
+target: cart-open
+checkpoint: drawer
+ruleId: button-name
+tier: auto
+seed: "altshift-seed: button-name icon-only close button"
+
+expect:
+  outcome: accepted
+  files:
+    - app/components/CartDrawer.vue
+  mustContain:
+    - "aria-label"
+  mustNotContain:
+    - 'aria-hidden="true" class="icon-button'
+    - 'tabindex="-1"'
+  notes: >
+    Either aria-label on the button or visually hidden text inside it is fine.
+    The label should describe the action ("Close cart"), not the icon ("X").

@@ -1,0 +1,25 @@
+{
+  "name": "@altshift/adapters",
+  "version": "0.0.0",
+  "description": "Framework detection and source hints for altshift.",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": {
+      "source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup src/index.ts --format esm --dts --clean",
+    "typecheck": "tsc --noEmit -p ."
+  },
+  "dependencies": {
+    "altshift": "workspace:*",
+    "playwright": "^1.65.1"
+  }
+}

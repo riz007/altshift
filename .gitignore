@@ -1,0 +1,31 @@
+node_modules/
+# packages/action/dist is force-added on release tags only
+dist/
+coverage/
+*.tsbuildinfo
+
+.env
+.env.local
+.env.*.local
+
+# spec, decision log and research stay private
+docs/internal/
+.claude/settings.local.json
+
+# altshift run output
+.altshift/
+test-results/
+playwright-report/
+
+# eval runs keep results, not traces
+evals/runs/
+
+.DS_Store
+.vscode/*
+!.vscode/extensions.json
+.idea/
+
+# fixture build output
+.nuxt/
+.output/
+.data/
