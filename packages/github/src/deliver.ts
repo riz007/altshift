@@ -6,6 +6,8 @@ const OUR_BRANCH = /^ariamend\/debt-[0-9a-f]{10}$/;
 const MARKER = /<!-- ariamend:covered ([\w,]*) -->/;
 // GitHub rejects bodies over 65,536 characters.
 const MAX_BODY = 60_000;
+// GitHub commits on behalf of API callers as web-flow, and signs those commits.
+const GITHUB_COMMITTER = "web-flow";
 
 export interface FileContent {
   /** Repo-relative path with forward slashes. */
@@ -31,7 +33,8 @@ export interface GitHubApi {
   openPullRequests(base: string): Promise<OpenPullRequest[]>;
   changedFiles(pullRequest: number): Promise<string[]>;
   /** Author and committer logins of every commit in the pull request. Empty where GitHub knows no account. */
-  commitAuthors(pullRequest: number): Promise<Array<{ author: string; committer: string }>>;
+  /** Every commit in the pull request: author and committer logins (empty when unknown), and whether GitHub verified its signature. */
+  commitAuthors(pullRequest: number): Promise<Array<{ author: string; committer: string; verified: boolean }>>;
   /** The login Ariamend acts as, e.g. "github-actions[bot]". */
   ownLogin(): Promise<string>;
   /** Create a commit on top of `parentSha` that sets exactly these files. Returns the new commit's sha. */
@@ -91,8 +94,13 @@ export async function findExisting(api: GitHubApi): Promise<Result<ExistingDeliv
       .sort((a, b) => a.number - b.number);
     for (const candidate of candidates) {
       const commits = await api.commitAuthors(candidate.number);
-      if (commits.length === 0 || commits.some((commit) => commit.author !== self || commit.committer !== self))
-        continue;
+      // Author and committer come from email addresses, which anyone can set. GitHub's signature on
+      // commits made through its API cannot be borrowed, so every commit must carry it.
+      const ours = (commit: { author: string; committer: string; verified: boolean }) =>
+        commit.verified &&
+        commit.author === self &&
+        (commit.committer === self || commit.committer === GITHUB_COMMITTER);
+      if (commits.length === 0 || !commits.every(ours)) continue;
       return ok({
         pullRequest: candidate,
         covered: coveredFingerprints(candidate.body),

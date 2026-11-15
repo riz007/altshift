@@ -234,6 +234,30 @@ describe("renderEvidence", () => {
     expect(body).not.toContain("```diff");
   });
 
+  it("names the checks that did not run instead of claiming every check passed", () => {
+    const withAll = renderEvidence(buildEvidence(report(accepted)));
+    expect(withAll).toContain("the project's own checks and the build.");
+    expect(withAll).not.toContain("Not run:");
+
+    const noChecks: FixOutcome = {
+      ...accepted,
+      attempts: [
+        attempt({
+          gates: [
+            ...gates(true),
+            { gate: "checks", passed: true, flagged: true, detail: "no checks configured in app.checks" },
+            { gate: "build", passed: true, flagged: true, detail: "no build configured in app.build" },
+          ],
+        }),
+      ],
+    };
+    const text = renderEvidence(buildEvidence(report(noChecks)));
+    expect(text).not.toContain("the project's own checks");
+    expect(text).toContain(
+      "Not run: no project checks (such as typecheck or lint) are configured; no build command is configured.",
+    );
+  });
+
   it("says plainly when nothing was fixed", () => {
     const text = renderEvidence(buildEvidence(report(rejected)));
     expect(text).toContain("**Fixed:** 0 finding(s) in 0 change(s).");

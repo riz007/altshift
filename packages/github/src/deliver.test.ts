@@ -17,14 +17,18 @@ const FILE = { path: "app/components/Cart.vue", content: "<template />" };
 /** A GitHub that records what was asked of it. */
 function fakeGitHub(
   open: OpenPullRequest[] = [],
-  options: { changed?: string[]; commits?: Array<{ author: string; committer: string }>; head?: string } = {},
+  options: {
+    changed?: string[];
+    commits?: Array<{ author: string; committer: string; verified: boolean }>;
+    head?: string;
+  } = {},
 ) {
   const calls: Array<[string, unknown]> = [];
   const api: GitHubApi = {
     defaultBranch: async () => ({ name: "main", sha: options.head ?? HEAD }),
     openPullRequests: async () => open,
     changedFiles: async () => options.changed ?? [],
-    commitAuthors: async () => options.commits ?? [{ author: BOT, committer: BOT }],
+    commitAuthors: async () => options.commits ?? [{ author: BOT, committer: "web-flow", verified: true }],
     ownLogin: async () => BOT,
     commit: async (input) => {
       calls.push(["commit", input]);
@@ -69,11 +73,24 @@ describe("findExisting", () => {
     expect(found.ok && found.value).toBeUndefined();
   });
 
-  it("ignores a pull request that has commits from anyone else", async () => {
-    const commits = [
-      { author: BOT, committer: BOT },
-      { author: "mallory", committer: BOT },
-    ];
+  it("recognises its own commits as GitHub records them: committed by web-flow and signed", async () => {
+    const commits = [{ author: BOT, committer: "web-flow", verified: true }];
+    const found = await findExisting(fakeGitHub([ours], { commits }).api);
+    expect(found.ok && found.value?.pullRequest.number).toBe(3);
+  });
+
+  it.each([
+    [
+      "a commit from anyone else",
+      [
+        { author: BOT, committer: "web-flow", verified: true },
+        { author: "mallory", committer: "web-flow", verified: true },
+      ],
+    ],
+    ["an unsigned commit that borrows the bot's email", [{ author: BOT, committer: BOT, verified: false }]],
+    ["a signed commit committed by someone else", [{ author: BOT, committer: "mallory", verified: true }]],
+    ["no commits at all", []],
+  ])("ignores a pull request with %s", async (_name, commits) => {
     const found = await findExisting(fakeGitHub([ours], { commits }).api);
     expect(found.ok && found.value).toBeUndefined();
   });

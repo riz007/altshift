@@ -37,6 +37,7 @@ export function createGitHubApi(token: string, repository: string): GitHubApi {
       return commits.map((commit) => ({
         author: commit.author?.login ?? "",
         committer: commit.committer?.login ?? "",
+        verified: commit.commit.verification?.verified === true,
       }));
     },
 

@@ -227,11 +227,21 @@ export function renderEvidence(pack: EvidencePack, options: RenderOptions = {}):
   const proposed = pack.items.filter((item) => item.status === "suggested");
   const notFixed = pack.items.filter((item) => item.status === "rejected" || item.status === "skipped");
   const drafts = fixed.filter((item) => item.needsHumanReview).length;
+  // Say which checks did not run, rather than let "passed every check" cover them.
+  const unconfigured = (gate: GateName, prefix: string) =>
+    fixed.some((item) => item.gates.some((result) => result.gate === gate && result.detail.startsWith(prefix)));
+  const missing = [
+    ...(unconfigured("checks", "no checks configured")
+      ? ["no project checks (such as typecheck or lint) are configured"]
+      : []),
+    ...(unconfigured("build", "no build configured") ? ["no build command is configured"] : []),
+  ];
+  const ran = `Each passed the scope and safety checks, a rescan and a visual comparison${missing.length === 0 ? ", the project's own checks and the build" : ""}.`;
 
   const lines = [
     "## Ariamend evidence",
     "",
-    `- **Fixed:** ${summary.findingsFixed} finding(s) in ${summary.fixed} change(s). Each passed every automated check: scope, safety, the project's own checks, a rescan, a visual comparison and the build.`,
+    `- **Fixed:** ${summary.findingsFixed} finding(s) in ${summary.fixed} change(s). ${ran}${missing.length > 0 ? ` Not run: ${missing.join("; ")}.` : ""}`,
     `- **Needs your review:** ${drafts} of those include wording or choices a person must check.`,
     `- **Proposed only:** ${summary.proposed}. These change how the page looks, so they are shown here and not applied.`,
     `- **Not fixed:** ${summary.notFixed + summary.skipped}.`,
