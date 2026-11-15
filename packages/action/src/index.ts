@@ -3,7 +3,7 @@ import * as core from "@actions/core";
 import { ExitCode, printable, readCheckout } from "@ariamend/core";
 import { anthropicClient, runDebt } from "@ariamend/fix";
 import { createGitHubApi, deliveryPort } from "@ariamend/github";
-import { isSafeEvent, parseInputs } from "./inputs.js";
+import { isSafeEvent, parseInputs, readInput } from "./inputs.js";
 
 // action.yml maps every input to INPUT_* explicitly, because composite actions do not.
 
@@ -12,7 +12,7 @@ import { isSafeEvent, parseInputs } from "./inputs.js";
  * so the version is whatever the project's lockfile pins, and nothing is downloaded at run time.
  */
 export async function runAction(): Promise<number> {
-  const parsed = parseInputs((name) => core.getInput(name));
+  const parsed = parseInputs((name) => readInput(name));
   if (!parsed.success) {
     core.setFailed(`Invalid inputs: ${parsed.error.issues.map((issue) => issue.message).join("; ")}`);
     return ExitCode.Failure;
@@ -20,7 +20,7 @@ export async function runAction(): Promise<number> {
   const inputs = parsed.data;
   core.setSecret(inputs.anthropicApiKey);
   core.setSecret(inputs.githubToken);
-  const licenseKey = core.getInput("license-key");
+  const licenseKey = readInput("license-key");
   if (licenseKey) core.setSecret(licenseKey);
 
   if (inputs.mode === "pr") {

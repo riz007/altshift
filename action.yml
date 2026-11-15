@@ -76,12 +76,14 @@ runs:
       shell: bash
       working-directory: ${{ inputs.working-directory }}
       run: node_modules/.bin/ariamend action
-      # Composite actions do not set INPUT_* on their own.
+      # Composite actions do not set INPUT_* on their own. The names use underscores, not hyphens:
+      # on Ubuntu, /bin/sh (dash) drops variables with hyphenated names, and package managers often
+      # start the ariamend command through a /bin/sh launcher.
       env:
         INPUT_MODE: ${{ inputs.mode }}
         INPUT_CONFIG: ${{ inputs.config }}
-        INPUT_ANTHROPIC-API-KEY: ${{ inputs.anthropic-api-key }}
-        INPUT_LICENSE-KEY: ${{ inputs.license-key }}
-        INPUT_GITHUB-TOKEN: ${{ inputs.github-token }}
-        INPUT_MAX-FIXES: ${{ inputs.max-fixes }}
-        INPUT_BUDGET-USD: ${{ inputs.budget-usd }}
+        INPUT_ANTHROPIC_API_KEY: ${{ inputs.anthropic-api-key }}
+        INPUT_LICENSE_KEY: ${{ inputs.license-key }}
+        INPUT_GITHUB_TOKEN: ${{ inputs.github-token }}
+        INPUT_MAX_FIXES: ${{ inputs.max-fixes }}
+        INPUT_BUDGET_USD: ${{ inputs.budget-usd }}
