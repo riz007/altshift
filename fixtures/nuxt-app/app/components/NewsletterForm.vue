@@ -9,7 +9,8 @@ const done = ref(false);
     <p v-if="done" role="status">Thanks. Check your inbox to confirm.</p>
     <form v-else class="newsletter__form" @submit.prevent="done = true">
       <!-- ariamend-seed: label email input with no label, placeholder or aria-label -->
-      <input v-model="email" class="newsletter__input" type="email" name="email" autocomplete="email" required />
+      <label for="newsletter-email">Email</label>
+      <input id="newsletter-email" v-model="email" class="newsletter__input" type="email" name="email" autocomplete="email" required />
       <button type="submit" class="button">Subscribe</button>
     </form>
   </section>
