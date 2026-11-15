@@ -41,7 +41,7 @@ function submit() {
       </div>
 
       <!-- ariamend-seed: aria-required-attr custom checkbox never exposes aria-checked -->
-      <div class="gift-wrap" role="checkbox" tabindex="0" @click="giftWrap = !giftWrap" @keydown.space.prevent="giftWrap = !giftWrap">
+      <div class="gift-wrap" role="checkbox" tabindex="0" :aria-checked="giftWrap" @click="giftWrap = !giftWrap" @keydown.space.prevent="giftWrap = !giftWrap">
         <span class="gift-wrap__box" :class="{ 'gift-wrap__box--on': giftWrap }" aria-hidden="true" />
         Add gift wrap (€3)
       </div>

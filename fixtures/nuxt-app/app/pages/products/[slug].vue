@@ -16,7 +16,7 @@ useHead({ title: `${product.name} | Fieldnote Supply` });
     <div>
       <img :src="product.image" :alt="product.name" width="400" height="300" />
       <!-- ariamend-seed: image-alt lifestyle photo with no alt attribute -->
-      <img class="product__lifestyle" src="/images/lifestyle.svg" width="400" height="300" />
+      <img class="product__lifestyle" src="/images/lifestyle.svg" alt="" width="400" height="300" />
     </div>
 
     <div>
