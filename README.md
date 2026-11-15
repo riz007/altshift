@@ -6,7 +6,9 @@ Ariamend scans a storefront's dev build, asks Claude for the smallest source cha
 
 Built for Nuxt and Vue storefronts first. Next.js is next.
 
-> **Status: early, not yet published to npm.** Scanning, gated fixing, the evidence pack, pull request delivery and the GitHub Action all work on Nuxt today. The package builds and installs cleanly from a packed tarball; it has not been released yet. See [What works today](#what-works-today) before you plan around it.
+> **Status: early (0.1.0).** Scanning, gated fixing, the evidence pack, pull request delivery and the GitHub Action all work on Nuxt today. Expect rough edges, and review every pull request it opens. See [What works today](#what-works-today) before you plan around it.
+
+[![npm](https://img.shields.io/npm/v/ariamend)](https://www.npmjs.com/package/ariamend)
 
 The name is ARIA plus _mend_: it repairs accessibility in your source code rather than reporting on it.
 
@@ -89,29 +91,29 @@ You can move a rule to a stricter or looser tier in config.
 
 ## What works today
 
-| Piece                                                          | State   |
-| -------------------------------------------------------------- | ------- |
-| Config (`ariamend.config.ts`), validated with clear errors     | Built   |
-| Page targets and Playwright journeys with named check points   | Built   |
-| axe-core scan engine in Chromium                               | Built   |
-| Stable finding fingerprints and deterministic JSON reports     | Built   |
-| `ariamend scan`                                                | Built   |
-| Nuxt 4 fixture storefront with seeded violations               | Built   |
-| Nuxt adapter: maps a failing element to its component file     | Built   |
-| Agent tools and path guard (read-only, staged edits)           | Built   |
-| The six gates, triage and the fix workspace                    | Built   |
-| Agent loop, model routing, cost meter and budget               | Built   |
-| `ariamend fix --dry-run`, fix evals                            | Built   |
-| Evidence pack (Markdown and JSON, with screenshots)            | Built   |
-| One pull request per run, updated instead of duplicated        | Built   |
-| GitHub Action (runs from this repository's checkout)           | Built   |
-| `ariamend` npm package (CLI and config API), packed and tested | Built   |
-| First npm release and tagged Action                            | Next    |
-| Next.js adapter, AccessLint engine, SARIF import               | Planned |
+| Piece                                                          | State    |
+| -------------------------------------------------------------- | -------- |
+| Config (`ariamend.config.ts`), validated with clear errors     | Built    |
+| Page targets and Playwright journeys with named check points   | Built    |
+| axe-core scan engine in Chromium                               | Built    |
+| Stable finding fingerprints and deterministic JSON reports     | Built    |
+| `ariamend scan`                                                | Built    |
+| Nuxt 4 fixture storefront with seeded violations               | Built    |
+| Nuxt adapter: maps a failing element to its component file     | Built    |
+| Agent tools and path guard (read-only, staged edits)           | Built    |
+| The six gates, triage and the fix workspace                    | Built    |
+| Agent loop, model routing, cost meter and budget               | Built    |
+| `ariamend fix --dry-run`, fix evals                            | Built    |
+| Evidence pack (Markdown and JSON, with screenshots)            | Built    |
+| One pull request per run, updated instead of duplicated        | Built    |
+| GitHub Action (runs from this repository's checkout)           | Built    |
+| `ariamend` npm package (CLI and config API), packed and tested | Built    |
+| npm release 0.1.0 and the `v0` Action tag                      | Released |
+| Next.js adapter, AccessLint engine, SARIF import               | Planned  |
 
 ### Install
 
-Once the first release is out, add it to your project as a dev dependency:
+Add it to your project as a dev dependency. You need Node 22.18 or newer.
 
 ```bash
 pnpm add -D ariamend
@@ -121,11 +123,9 @@ pnpm add -D ariamend
 pnpm exec ariamend install-browser
 ```
 
-Until then, run it from a clone as below.
+### Try it from a clone
 
-### Try the scanner
-
-Run it from a clone. You need Node 22.18 or newer (24 recommended) and pnpm 10.
+The repository includes a small Nuxt storefront with seeded violations, so you can see Ariamend work before pointing it at your own project. You need Node 22.18 or newer (24 recommended) and pnpm 10.
 
 ```bash
 git clone https://github.com/riz007/ariamend && cd ariamend
@@ -320,16 +320,16 @@ It is also not an overlay. It changes your source code through pull requests and
 
 ## Roadmap
 
-| Milestone | Scope                                                                                | State   |
-| --------- | ------------------------------------------------------------------------------------ | ------- |
-| 1         | Scan engine, targets and journeys, fingerprints, `ariamend scan`, Nuxt fixture       | Built   |
-| 2         | Nuxt adapter, fix engine with tools, gates and model routing, `fix --dry-run`, evals | Built   |
-| 3         | Pull request delivery, evidence pack, GitHub Action                                  | Built   |
-| 3.1       | One public npm package; the Action runs the project's installed copy                 | Built   |
-| 3.2       | First npm release and tagged Action                                                  | Next    |
-| 4         | Next.js adapter, AccessLint engine option, SARIF import                              | Planned |
-| 5         | Fix-on-label for open pull requests                                                  | Planned |
-| Later     | SvelteKit, Astro, Hydrogen, as people ask                                            | Planned |
+| Milestone | Scope                                                                                | State    |
+| --------- | ------------------------------------------------------------------------------------ | -------- |
+| 1         | Scan engine, targets and journeys, fingerprints, `ariamend scan`, Nuxt fixture       | Built    |
+| 2         | Nuxt adapter, fix engine with tools, gates and model routing, `fix --dry-run`, evals | Built    |
+| 3         | Pull request delivery, evidence pack, GitHub Action                                  | Built    |
+| 3.1       | One public npm package; the Action runs the project's installed copy                 | Built    |
+| 3.2       | npm release 0.1.0 and the `v0` Action tag                                            | Released |
+| 4         | Next.js adapter, AccessLint engine option, SARIF import                              | Planned  |
+| 5         | Fix-on-label for open pull requests                                                  | Planned  |
+| Later     | SvelteKit, Astro, Hydrogen, as people ask                                            | Planned  |
 
 ## Repository layout
 

@@ -38,6 +38,6 @@ ANTHROPIC_API_KEY=... pnpm exec ariamend fix --dry-run
 
 Automated tools find only part of WCAG issues. Ariamend never claims a site is accessible or compliant, and every pull request needs a person to review it.
 
-Documentation, the GitHub Action and the security model: see the repository README.
+Documentation, the GitHub Action and the security model: [github.com/riz007/ariamend](https://github.com/riz007/ariamend).
 
 MIT licence.

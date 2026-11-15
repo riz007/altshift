@@ -1,5 +1,5 @@
-# Example workflow for a storefront repo. The Action is not published yet:
-# replace OWNER when it is. Every action is pinned to a commit SHA; update them on purpose.
+# Example workflow for a storefront repo. Add ariamend as a dev dependency first (pnpm add -D ariamend).
+# Every action is pinned to a commit SHA; update them on purpose.
 #
 # It runs on a schedule on the default branch, so secrets are never exposed to code from a fork.
 # It needs "Allow GitHub Actions to create and approve pull requests" turned on in the repository settings.
@@ -35,7 +35,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
 
       - id: ariamend
-        uses: OWNER/ariamend@v0
+        uses: riz007/ariamend@v0
         with:
           mode: debt
           anthropic-api-key: ${{ secrets.ANTHROPIC_API_KEY }}
