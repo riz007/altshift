@@ -40,6 +40,10 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
+      # The fixture depends on the workspace's own ariamend. pnpm only links its command once the
+      # package is built, so install again, offline, after the build. Projects that install the
+      # published package do not need this step.
+      - run: pnpm install --frozen-lockfile --offline
 
       - id: ariamend
         uses: ./
