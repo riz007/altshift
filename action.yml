@@ -1,6 +1,6 @@
 name: AltShift
 description: Fixes accessibility findings in storefront source code and opens one pull request with gated fixes and an evidence pack.
-author: Rudra
+author: Rizwanul Islam Rudra
 branding:
   icon: check-circle
   color: blue
