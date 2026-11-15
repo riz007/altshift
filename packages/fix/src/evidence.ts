@@ -236,7 +236,14 @@ export function renderEvidence(pack: EvidencePack, options: RenderOptions = {}):
       : []),
     ...(unconfigured("build", "no build configured") ? ["no build command is configured"] : []),
   ];
-  const ran = `Each passed the scope and safety checks, a rescan and a visual comparison${missing.length === 0 ? ", the project's own checks and the build" : ""}.`;
+  const passed = [
+    "the scope and safety checks",
+    "a rescan",
+    "a visual comparison",
+    ...(unconfigured("checks", "no checks configured") ? [] : ["the project's own checks"]),
+    ...(unconfigured("build", "no build configured") ? [] : ["the build"]),
+  ];
+  const ran = `Each passed ${passed.slice(0, -1).join(", ")} and ${passed.at(-1)}.`;
 
   const lines = [
     "## Ariamend evidence",

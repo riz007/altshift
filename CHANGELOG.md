@@ -1,6 +1,8 @@
 # Changelog
 
-## Unreleased
+## 0.1.0 (2026-11-15)
+
+First release. Nuxt and Vue projects; Next.js is next. Early: expect rough edges, and review every pull request it opens.
 
 - **Renamed from AltShift to Ariamend.** The package is `ariamend`, the config file `ariamend.config.ts`, environment variables `ARIAMEND_*`, the evidence folder `.ariamend/` and branches `ariamend/debt-*`.
 - One public package, `ariamend`: the command line plus `defineConfig` and `defineJourney`. Everything else is bundled into it.

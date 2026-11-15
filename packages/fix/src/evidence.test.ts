@@ -236,7 +236,9 @@ describe("renderEvidence", () => {
 
   it("names the checks that did not run instead of claiming every check passed", () => {
     const withAll = renderEvidence(buildEvidence(report(accepted)));
-    expect(withAll).toContain("the project's own checks and the build.");
+    expect(withAll).toContain(
+      "Each passed the scope and safety checks, a rescan, a visual comparison, the project's own checks and the build.",
+    );
     expect(withAll).not.toContain("Not run:");
 
     const noChecks: FixOutcome = {
@@ -251,6 +253,22 @@ describe("renderEvidence", () => {
         }),
       ],
     };
+    const checksOnly: FixOutcome = {
+      ...accepted,
+      attempts: [
+        attempt({
+          gates: [
+            ...gates(true),
+            { gate: "checks", passed: true, flagged: true, detail: "no checks configured in app.checks" },
+            { gate: "build", passed: true, detail: "build passed" },
+          ],
+        }),
+      ],
+    };
+    expect(renderEvidence(buildEvidence(report(checksOnly)))).toContain(
+      "Each passed the scope and safety checks, a rescan, a visual comparison and the build. Not run: no project checks (such as typecheck or lint) are configured.",
+    );
+
     const text = renderEvidence(buildEvidence(report(noChecks)));
     expect(text).not.toContain("the project's own checks");
     expect(text).toContain(
