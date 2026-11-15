@@ -15,13 +15,25 @@ export const DEFAULT_MODELS: ModelRouting = {
   fallback: "claude-sonnet-5-5",
 };
 
+/**
+ * Thinking depth for the fix model. Fixes are small, well-specified edits, and evals should show
+ * a quality gain before this goes up: it is the main driver of cost per fix.
+ */
+export const FIX_EFFORT = "medium" as const;
+
+export const MAX_OUTPUT_TOKENS = 16_000;
+
 export function resolveModels(
   fromConfig: Partial<ModelRouting> = {},
   env: Record<string, string | undefined> = process.env,
 ): ModelRouting {
   return {
     fix: env.ALTSHIFT_MODEL_FIX || fromConfig.fix || DEFAULT_MODELS.fix,
-    triage: env.ALTSHIFT_MODEL_TRIAGE || fromConfig.triage || DEFAULT_MODELS.triage,
-    fallback: env.ALTSHIFT_MODEL_FALLBACK || fromConfig.fallback || DEFAULT_MODELS.fallback,
+    triage:
+      env.ALTSHIFT_MODEL_TRIAGE || fromConfig.triage || DEFAULT_MODELS.triage,
+    fallback:
+      env.ALTSHIFT_MODEL_FALLBACK ||
+      fromConfig.fallback ||
+      DEFAULT_MODELS.fallback,
   };
 }

@@ -1,0 +1,15 @@
+{
+  "id": "nuxt-select-name-size",
+  "fixture": "nuxt-app",
+  "target": "/products/trail-mug",
+  "checkpoint": "load",
+  "ruleId": "select-name",
+  "expect": {
+    "outcome": "accepted",
+    "files": ["app/components/SizePicker.vue"],
+    "mustContain": ["id=\""],
+    "mustNotContain": ["aria-label=", "title="],
+    "mustKeep": ["<select", "Size"]
+  },
+  "notes": "The visible \"Size\" text should become the label (label + for/id, or aria-labelledby). A separate aria-label that duplicates it is acceptable but weaker."
+}

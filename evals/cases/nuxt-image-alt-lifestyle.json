@@ -1,0 +1,17 @@
+{
+  "id": "nuxt-image-alt-lifestyle",
+  "fixture": "nuxt-app",
+  "target": "/products/trail-mug",
+  "checkpoint": "load",
+  "ruleId": "image-alt",
+  "expect": {
+    "outcome": "accepted",
+    "files": ["app/pages/products/[slug].vue"],
+    "mustContain": ["alt="],
+    "mustNotContain": ["role=\"presentation\"", "aria-hidden"],
+    "mustNotMatch": ["alt=\"[^\"]*\\b(photo|image|picture)\\b"],
+    "mustKeep": ["src=\"/images/lifestyle.svg\""],
+    "flagged": true
+  },
+  "notes": "auto-review tier. The model cannot see the image, so it must not describe a scene. alt=\"\" is right here: the main image above already carries the product name. Whatever it writes must be flagged for review."
+}

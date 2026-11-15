@@ -17,6 +17,7 @@ const gift = ref(false);
     <div class="gift" role="checkbox" tabindex="0" @click="gift = !gift">Gift wrap</div>
     <nav class="relative hidden md:flex"><NuxtLink to="/p" class="promo"><svg /></NuxtLink></nav>
     <button v-html="icon" class="icon"></button>
+    <h2 v-if="user.isAdmin" id="cart-title">{{ product.name }}</h2>
   </div>
 </template>
 
@@ -58,6 +59,32 @@ describe("safetyGate: fixes that pass", () => {
     expect(
       edit(BUTTON, BUTTON.replace("@click", ":aria-label=\"open ? 'Close cart' : 'Open cart'\" @click")).passed,
     ).toBe(true);
+  });
+
+  it("passes a name built from existing data, as a draft", () => {
+    const named = edit(BUTTON, BUTTON.replace("@click", ':aria-label="`Save ${product.name} to wishlist`" @click'));
+    expect(named).toMatchObject({ passed: true, flagged: true });
+    expect(named.detail).toContain("Draft: please review.");
+
+    // Bound straight to data: the model still chose the field, so it is a draft too.
+    const bound = edit('<img class="hero"', '<img :alt="product.name" class="hero"');
+    expect(bound).toMatchObject({ passed: true, flagged: true });
+    expect(bound.detail).toContain("alt is bound to product.name: check this field describes this control.");
+    // Words such as "window" inside the text are not code.
+    expect(
+      edit(BUTTON, BUTTON.replace("@click", ":aria-label=\"open ? 'Close window' : 'Open window'\" @click")).passed,
+    ).toBe(true);
+  });
+
+  it("says when alt text was written without seeing the image, and when an id is fixed", () => {
+    expect(edit('<img class="hero"', '<img alt="A mug on a rock" class="hero"').detail).toContain(
+      "The image itself was not viewed.",
+    );
+    expect(edit('<img class="hero"', '<img id="hero" class="hero"')).toMatchObject({
+      passed: true,
+      flagged: true,
+      detail: expect.stringContaining('adds a fixed id "hero"'),
+    });
   });
 
   it("passes changing a div to an li, and wiring a label with for and id", () => {
@@ -139,6 +166,26 @@ describe("safetyGate: code execution and external content", () => {
       BUTTON,
       BUTTON.replace("@click", ':aria-label="process.env.NPM_TOKEN" @click'),
     ],
+    [
+      "a template string that reads the environment",
+      BUTTON,
+      BUTTON.replace("@click", ':aria-label="`x ${process.env.NPM_TOKEN}`" @click'),
+    ],
+    [
+      "a template string that calls a function",
+      BUTTON,
+      BUTTON.replace("@click", ':aria-label="`x ${steal()}`" @click'),
+    ],
+    [
+      "a template string with a nested expression",
+      BUTTON,
+      BUTTON.replace("@click", ':aria-label="`x ${a ? b : c}`" @click'),
+    ],
+    [
+      "a ternary that reads the environment",
+      BUTTON,
+      BUTTON.replace("@click", ":aria-label=\"process ? 'a' : 'b'\" @click"),
+    ],
     ["a binding that reads runtime config", BUTTON, BUTTON.replace("@click", ':aria-label="$config.secretKey" @click')],
     [
       "a binding that calls a function",
@@ -200,8 +247,104 @@ describe("safetyGate: hiding or removing instead of fixing", () => {
 
   it("names what it rejected", () => {
     const result = edit('<img class="hero" src="/hero.png" />', "");
-    expect(result.detail).toBe(
-      `${FILE}: removes 1 <img> element(s). Fix the element instead of removing it\n${FILE}: removes 1 element(s) overall\n${FILE}: removes or changes src=/hero.png`,
+    expect(result.detail.split("\n")).toEqual([
+      `${FILE}: removes 1 <img> element(s). Fix the element instead of removing it`,
+      `${FILE}: removes 1 element(s) overall`,
+      `${FILE}: removes or changes a handler, directive or other attribute (src=/hero.png)`,
+    ]);
+  });
+});
+
+describe("safetyGate: findings from the second review", () => {
+  it.each([
+    [
+      "an encoded quote that ends the string early",
+      ":aria-label=\"'a&#39;+Object.constructor(&#39;return process&#39;)().env.HOME+&#39;'\"",
+    ],
+    [
+      "an encoded quote around an import",
+      ":title=\"'x&#39;+Object.constructor(&#39;import(&quot;node:child_process&quot;)&#39;)()+&#39;'\"",
+    ],
+    [
+      "an encoded placeholder in a template string",
+      ':alt="`&#36;{Object.constructor(&#39;return fetch&#39;)()(&#39;/api/me&#39;)}`"',
+    ],
+    ["route parameters", ':aria-label="$route.query.x"'],
+    ["the internal instance", ':title="$.appContext.app"'],
+    ["runtime config through an alias the template never used", ':title="config.stripeSecretKey"'],
+    ["a name the template does not already read", ':aria-label="session.user.email"'],
+    ["a fixed state written as a binding", ':aria-checked="false"'],
+    ["a fixed state written as a bound string", ":aria-pressed=\"'true'\""],
+    ["a fixed state written as a template string", ':aria-checked="`false`"'],
+    ["a presentation role in a template string", ':role="`presentation`"'],
+    ["a presentation role in both branches", ":role=\"open ? 'none' : 'none'\""],
+    ["a hiding class in a binding", ":class=\"'hidden'\""],
+    ["a role description", 'aria-roledescription="thing"'],
+    ["an id the template already uses", 'id="cart-title"'],
+  ])("rejects %s", (_name, attribute) => {
+    expect(edit(BUTTON, BUTTON.replace("@click", `${attribute} @click`)).passed).toBe(false);
+  });
+
+  it("rejects an entity inside an interpolation", () => {
+    expect(
+      edit("Gift wrap", "Gift wrap {{ 'a&#39;+Object.constructor(&#39;return document.cookie&#39;)()+&#39; ' }}")
+        .passed,
+    ).toBe(false);
+  });
+
+  it("rejects moving an existing guard or handler onto another element", () => {
+    const guard = BEFORE.replace(' v-if="user.isAdmin"', "").replace(
+      BUTTON,
+      BUTTON.replace("@click", 'v-if="user.isAdmin" @click'),
     );
+    expect(gate(guard)).toMatchObject({
+      passed: false,
+      detail: expect.stringContaining("handler, directive or other attribute"),
+    });
+
+    const handler = BEFORE.replace(' @click="gift = !gift"', "").replace(
+      '<img class="hero"',
+      '<img @click="gift = !gift" class="hero"',
+    );
+    expect(gate(handler).passed).toBe(false);
+  });
+
+  it("rejects moving aria-hidden from an icon to a control", () => {
+    const before = BEFORE.replace('<svg viewBox="0 0 24 24">', '<svg aria-hidden="true" viewBox="0 0 24 24">');
+    const after = BEFORE.replace('<img class="hero"', '<img aria-hidden="true" class="hero"');
+    expect(gate(after, FILE, before).passed).toBe(false);
+  });
+
+  it("rejects a name that changes with state on a toggle", () => {
+    const before = BEFORE.replace(BUTTON, BUTTON.replace("@click", ':aria-pressed="open" @click'));
+    const after = before.replace(
+      ':aria-pressed="open"',
+      ":aria-label=\"open ? 'Remove' : 'Save'\" :aria-pressed=\"open\"",
+    );
+    expect(gate(after, FILE, before)).toMatchObject({
+      passed: false,
+      detail: expect.stringContaining("Keep one name"),
+    });
+  });
+
+  it("flags a name taken from other text, and the removal of a naming attribute", () => {
+    const named = edit('<img class="hero"', '<img aria-labelledby="cart-title" class="hero"');
+    expect(named).toMatchObject({
+      passed: true,
+      flagged: true,
+      detail: expect.stringContaining('text from "cart-title"'),
+    });
+
+    const removed = edit(' id="cart-title"', "");
+    expect(removed).toMatchObject({
+      passed: true,
+      flagged: true,
+      detail: expect.stringContaining("removes id=cart-title"),
+    });
+  });
+
+  it("notes an unchecked translation key", () => {
+    const result = edit(BUTTON, BUTTON.replace("@click", ":aria-label=\"$t('cart.close')\" @click"));
+    expect(result.detail).toContain("The translation key was not checked.");
   });
 });

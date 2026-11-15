@@ -36,6 +36,21 @@ describe("resolveModels", () => {
 
 describe("costUsd", () => {
   it("refuses to price a model with no entry", () => {
-    expect(() => costUsd("claude-fable-5-2", { input_tokens: 1, output_tokens: 1 })).toThrow(UnknownPriceError);
+    expect(() => costUsd("claude-unknown-9", { input_tokens: 1, output_tokens: 1 })).toThrow(UnknownPriceError);
+    // Haiku 5.5 has two price tiers by prompt length, which the table cannot express, so it has no entry.
+    expect(() => costUsd("claude-haiku-5-5", { input_tokens: 1, output_tokens: 1 })).toThrow(UnknownPriceError);
+  });
+
+  it("prices input, output, cache writes and cache reads separately", () => {
+    const usage = {
+      input_tokens: 1_000_000,
+      output_tokens: 100_000,
+      cache_creation_input_tokens: 200_000,
+      cache_read_input_tokens: 500_000,
+    };
+    // 8 + 4 + 2 + 0.1
+    expect(costUsd("claude-fable-5-2", usage)).toBeCloseTo(14.1, 6);
+    // 2 + 1 + 0.5 + 0.05
+    expect(costUsd("claude-sonnet-5-5", usage)).toBeCloseTo(3.55, 6);
   });
 });

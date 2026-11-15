@@ -1,0 +1,167 @@
+{
+  "date": "2026-11-15",
+  "models": [
+    "claude-fable-5-2"
+  ],
+  "promptVersion": "0.3.0",
+  "filter": null,
+  "summary": {
+    "cases": 10,
+    "passed": 9,
+    "fixRate": 1,
+    "regressionRate": 0,
+    "costUsd": 1.1438432,
+    "costPerAcceptedFixUsd": 0.1429804,
+    "refusals": 0,
+    "fallbacks": 0
+  },
+  "results": [
+    {
+      "id": "nuxt-aria-required-attr-gift",
+      "passed": true,
+      "status": "accepted",
+      "attempts": 1,
+      "costUsd": 0.090223,
+      "reasons": [],
+      "gateFailures": [],
+      "diff": [
+        "app/pages/checkout.vue",
+        "- <div class=\"gift-wrap\" role=\"checkbox\" tabindex=\"0\" @click=\"giftWrap = !giftWrap\" @keydown.space.prevent=\"giftWrap = !giftWrap\">",
+        "+ <div class=\"gift-wrap\" role=\"checkbox\" tabindex=\"0\" :aria-checked=\"giftWrap\" @click=\"giftWrap = !giftWrap\" @keydown.space.prevent=\"giftWrap = !giftWrap\">"
+      ]
+    },
+    {
+      "id": "nuxt-button-name-cart-close",
+      "passed": true,
+      "status": "accepted",
+      "attempts": 1,
+      "costUsd": 0.09454660000000001,
+      "reasons": [],
+      "gateFailures": [],
+      "diff": [
+        "app/components/CartDrawer.vue",
+        "- <button type=\"button\" class=\"icon-button cart-drawer__close\" @click=\"open = false\">",
+        "+ <button type=\"button\" class=\"icon-button cart-drawer__close\" aria-label=\"Close cart\" @click=\"open = false\">"
+      ]
+    },
+    {
+      "id": "nuxt-button-name-wishlist",
+      "passed": true,
+      "status": "accepted",
+      "attempts": 1,
+      "costUsd": 0.10443460000000002,
+      "reasons": [],
+      "gateFailures": [],
+      "diff": [
+        "app/components/ProductCard.vue",
+        "- <button type=\"button\" class=\"icon-button product-card__wishlist\" :aria-pressed=\"saved\" @click=\"saved = !saved\">",
+        "+ <button type=\"button\" class=\"icon-button product-card__wishlist\" :aria-label=\"`Save ${product.name} to wishlist`\" :aria-pressed=\"saved\" @click=\"saved = !saved\">"
+      ]
+    },
+    {
+      "id": "nuxt-color-contrast-badge",
+      "passed": true,
+      "status": "suggested",
+      "attempts": 1,
+      "costUsd": 0.114182,
+      "reasons": [],
+      "gateFailures": [],
+      "diff": [
+        "app/pages/products/[slug].vue",
+        "- color: #fff;",
+        "+ color: var(--ink);"
+      ]
+    },
+    {
+      "id": "nuxt-color-contrast-errors",
+      "passed": false,
+      "status": "suggested",
+      "attempts": 1,
+      "costUsd": 0.1743226,
+      "reasons": [
+        "the fix does not add \"color\""
+      ],
+      "gateFailures": [],
+      "diff": [
+        "app/assets/main.css",
+        "- --error: #f0616d;",
+        "+ --error: #b42318;"
+      ]
+    },
+    {
+      "id": "nuxt-image-alt-lifestyle",
+      "passed": true,
+      "status": "accepted",
+      "attempts": 1,
+      "costUsd": 0.0904336,
+      "reasons": [],
+      "gateFailures": [],
+      "diff": [
+        "app/pages/products/[slug].vue",
+        "- <img class=\"product__lifestyle\" src=\"/images/lifestyle.svg\" width=\"400\" height=\"300\" />",
+        "+ <img class=\"product__lifestyle\" src=\"/images/lifestyle.svg\" alt=\"\" width=\"400\" height=\"300\" />"
+      ]
+    },
+    {
+      "id": "nuxt-label-newsletter",
+      "passed": true,
+      "status": "accepted",
+      "attempts": 1,
+      "costUsd": 0.1343606,
+      "reasons": [],
+      "gateFailures": [],
+      "diff": [
+        "app/components/NewsletterForm.vue",
+        "- <input v-model=\"email\" class=\"newsletter__input\" type=\"email\" name=\"email\" autocomplete=\"email\" required />",
+        "+ <label for=\"newsletter-email\">Email</label>",
+        "+ <input id=\"newsletter-email\" v-model=\"email\" class=\"newsletter__input\" type=\"email\" name=\"email\" autocomplete=\"email\" required />"
+      ]
+    },
+    {
+      "id": "nuxt-link-name-promo",
+      "passed": true,
+      "status": "accepted",
+      "attempts": 1,
+      "costUsd": 0.1316496,
+      "reasons": [],
+      "gateFailures": [],
+      "diff": [
+        "app/components/PromoBanner.vue",
+        "- <NuxtLink to=\"/products/canvas-pack\" class=\"icon-button promo__link\">",
+        "+ <NuxtLink to=\"/products/canvas-pack\" class=\"icon-button promo__link\" aria-label=\"View the Canvas Day Pack\">"
+      ]
+    },
+    {
+      "id": "nuxt-list-specs",
+      "passed": true,
+      "status": "accepted",
+      "attempts": 1,
+      "costUsd": 0.0979438,
+      "reasons": [],
+      "gateFailures": [],
+      "diff": [
+        "app/components/SpecList.vue",
+        "- <div v-for=\"[label, value] in specs\" :key=\"label\" class=\"specs__row\">",
+        "- </div>",
+        "+ <li v-for=\"[label, value] in specs\" :key=\"label\" class=\"specs__row\">",
+        "+ </li>"
+      ]
+    },
+    {
+      "id": "nuxt-select-name-size",
+      "passed": true,
+      "status": "accepted",
+      "attempts": 1,
+      "costUsd": 0.11174680000000002,
+      "reasons": [],
+      "gateFailures": [],
+      "diff": [
+        "app/components/SizePicker.vue",
+        "- <span class=\"size-picker__label\">Size</span>",
+        "- <select v-model=\"size\" class=\"size-picker__select\">",
+        "+ <span id=\"size-picker-label\" class=\"size-picker__label\">Size</span>",
+        "+ <select v-model=\"size\" class=\"size-picker__select\" aria-labelledby=\"size-picker-label\">"
+      ]
+    }
+  ]
+}

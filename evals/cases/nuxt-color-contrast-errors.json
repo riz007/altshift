@@ -1,0 +1,14 @@
+{
+  "id": "nuxt-color-contrast-errors",
+  "fixture": "nuxt-app",
+  "target": "checkout-errors",
+  "checkpoint": "errors",
+  "ruleId": "color-contrast",
+  "expect": {
+    "outcome": "suggested",
+    "files": ["app/pages/checkout.vue", "app/assets/main.css"],
+    "mustContain": [],
+    "mustNotContain": ["font-size", "opacity", "aria-hidden", "!important"]
+  },
+  "notes": "suggest tier. Changing the --error token once clears all three messages and is the best proposal. A colour change on .field-error is acceptable."
+}

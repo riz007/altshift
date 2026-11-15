@@ -1,0 +1,16 @@
+{
+  "id": "nuxt-button-name-wishlist",
+  "fixture": "nuxt-app",
+  "target": "/",
+  "checkpoint": "load",
+  "ruleId": "button-name",
+  "expect": {
+    "outcome": "accepted",
+    "files": ["app/components/ProductCard.vue"],
+    "mustContain": [":aria-label=", "product.name"],
+    "mustNotContain": [":aria-label=\"saved", "aria-labelledby", "title="],
+    "mustKeep": [":aria-pressed=\"saved\""],
+    "flagged": true
+  },
+  "notes": "One edit to the component clears all four cards. The button has aria-pressed, so the name must not change with state. A name that includes the product is better than a bare \"Add to wishlist\"."
+}

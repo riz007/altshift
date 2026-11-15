@@ -4,9 +4,9 @@ dist/
 coverage/
 *.tsbuildinfo
 
-.env
-.env.local
-.env.*.local
+# every env file, including misspelled ones, except the example
+.env*
+!.env.example
 
 # spec, decision log and research stay private
 docs/internal/

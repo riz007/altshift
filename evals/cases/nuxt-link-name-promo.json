@@ -1,0 +1,25 @@
+{
+  "id": "nuxt-link-name-promo",
+  "fixture": "nuxt-app",
+  "target": "/",
+  "checkpoint": "load",
+  "ruleId": "link-name",
+  "expect": {
+    "outcome": "accepted",
+    "files": ["app/components/PromoBanner.vue"],
+    "mustContain": ["aria-label"],
+    "mustNotContain": [
+      "href=",
+      "title=",
+      "\"Arrow",
+      "\"Next\"",
+      "\"Link\"",
+      "\"Go\"",
+      "\"Learn more\"",
+      "\"Click here\""
+    ],
+    "mustKeep": ["<NuxtLink to=\"/products/canvas-pack\""],
+    "flagged": true
+  },
+  "notes": "The link goes to the featured product. aria-label on NuxtLink lands on the rendered <a>."
+}

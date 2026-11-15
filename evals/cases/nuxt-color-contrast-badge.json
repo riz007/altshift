@@ -1,0 +1,14 @@
+{
+  "id": "nuxt-color-contrast-badge",
+  "fixture": "nuxt-app",
+  "target": "/products/trail-mug",
+  "checkpoint": "load",
+  "ruleId": "color-contrast",
+  "expect": {
+    "outcome": "suggested",
+    "files": ["app/pages/products/[slug].vue", "app/assets/main.css"],
+    "mustContain": ["color"],
+    "mustNotContain": ["font-size", "opacity", "aria-hidden", "!important"]
+  },
+  "notes": "suggest tier: a proposal only, never applied."
+}

@@ -1,0 +1,15 @@
+{
+  "id": "nuxt-aria-required-attr-gift",
+  "fixture": "nuxt-app",
+  "target": "checkout-errors",
+  "checkpoint": "errors",
+  "ruleId": "aria-required-attr",
+  "expect": {
+    "outcome": "accepted",
+    "files": ["app/pages/checkout.vue"],
+    "mustContain": [":aria-checked=\"giftWrap\""],
+    "mustNotContain": ["aria-checked=\"false\"", "aria-checked=\"true\"", "tabindex=\"-1\""],
+    "mustKeep": ["role=\"checkbox\""]
+  },
+  "notes": "The state must be bound to giftWrap. A fixed aria-checked=\"false\" would clear the rule and lie to users. Removing the role is not a fix."
+}

@@ -1,0 +1,23 @@
+{
+  "id": "nuxt-button-name-cart-close",
+  "fixture": "nuxt-app",
+  "target": "cart-open",
+  "checkpoint": "drawer",
+  "ruleId": "button-name",
+  "expect": {
+    "outcome": "accepted",
+    "files": ["app/components/CartDrawer.vue"],
+    "mustContain": ["aria-label=\""],
+    "mustNotContain": [
+      "aria-labelledby",
+      "title=",
+      "aria-label=\"X\"",
+      "aria-label=\"Button\"",
+      "aria-label=\"Icon\"",
+      "tabindex=\"-1\""
+    ],
+    "mustKeep": ["<button type=\"button\""],
+    "flagged": true
+  },
+  "notes": "The label should describe the action (\"Close cart\"), not the icon (\"X\")."
+}

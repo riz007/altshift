@@ -44,9 +44,17 @@ describe("altshift", () => {
     expect(err).toContain("--base-url");
   });
 
-  it("says plainly that fix and init are not available yet", async () => {
-    expect(await main(["fix", "--dry-run"], io())).toBe(ExitCode.Failure);
+  it("says plainly what is not available yet", async () => {
+    expect(await main(["init"], io())).toBe(ExitCode.Failure);
     expect(err).toContain("not available yet");
+
+    expect(await main(["fix"], io())).toBe(ExitCode.Failure);
+    expect(err).toContain("only supports --dry-run");
+  });
+
+  it("fix exits 2 without an API key, before starting anything", async () => {
+    expect(await main(["fix", "--dry-run"], io())).toBe(ExitCode.Failure);
+    expect(err).toContain("ANTHROPIC_API_KEY is not set");
   });
 
   it("scan exits 2 when there is no config", async () => {

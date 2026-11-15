@@ -6,7 +6,7 @@ AltShift scans a storefront's dev build, asks Claude for the smallest source cha
 
 Built for Nuxt and Vue storefronts first. Next.js is next.
 
-> **Status: early.** The scanner works today (`altshift scan`). The fix engine, the pull request delivery and the GitHub Action are being built in the open. See [What works today](#what-works-today) before you plan around it.
+> **Status: early.** Scanning (`altshift scan`) and gated fixing as a dry run (`altshift fix --dry-run`) work today on Nuxt. Opening pull requests, the evidence pack and the GitHub Action are next. See [What works today](#what-works-today) before you plan around it.
 
 ---
 
@@ -40,11 +40,11 @@ flowchart LR
 
     classDef built stroke-width:2px
     classDef planned stroke-dasharray:5 4
-    class A,B built
-    class C,D,E,F,G,H,I,J,K planned
+    class A,B,C,D,E,F,G,H,I,J built
+    class K planned
 ```
 
-Solid boxes run end to end today. Dashed boxes are on the [roadmap](#roadmap): the gates and triage exist and are tested, but nothing drives them yet.
+Solid boxes run end to end today. The dashed box is on the [roadmap](#roadmap): fixes are gated and reported, but not yet delivered as a pull request.
 
 ### The gates
 
@@ -99,8 +99,8 @@ You can move a rule to a stricter or looser tier in config.
 | Nuxt adapter: maps a failing element to its component file   | Built   |
 | Agent tools and path guard (read-only, staged edits)         | Built   |
 | The six gates, triage and the fix workspace                  | Built   |
-| Agent loop, model routing, cost meter                        | Next    |
-| `altshift fix --dry-run`, fix evals                          | Next    |
+| Agent loop, model routing, cost meter and budget             | Built   |
+| `altshift fix --dry-run`, fix evals                          | Built   |
 | Pull request delivery, evidence pack, GitHub Action          | Planned |
 | Next.js adapter, AccessLint engine, SARIF import             | Planned |
 
@@ -156,6 +156,36 @@ cart-open  (drawer)
 ```
 
 The third column is the tier: what the fix engine will be allowed to do with that finding. Add `--json` for a machine-readable report. Two scans of the same build produce byte-identical JSON, which is what makes the rescan gate possible.
+
+### Try a fix
+
+`fix --dry-run` asks Claude for a fix for each finding, runs every fix through the gates, prints the result, and then puts your files back exactly as they were. It needs an Anthropic API key in `.env.local` (`ANTHROPIC_API_KEY=...`) and costs real money: about $0.10 per finding group on the bundled storefront.
+
+```bash
+cd fixtures/nuxt-app && node --env-file=../../.env.local ../../packages/cli/dist/index.js fix --dry-run
+```
+
+Real output for one group, shortened:
+
+```text
+FIXED  button-name  4 finding(s) on / (load)
+  scope   pass          1 file(s), 2 changed line(s)
+  safety  pass, review  Draft: please review. New aria-label: "`Save ${product.name} to wishlist`".
+  checks  pass, review  no checks configured in app.checks
+  rescan  pass          4 of 4 finding(s) cleared
+  visual  pass          0.00% of pixels changed
+  build   pass          build passed
+    app/components/ProductCard.vue
+    - <button type="button" class="icon-button product-card__wishlist" :aria-pressed="saved" ...>
+    + <button type="button" class="icon-button product-card__wishlist" :aria-label="`Save ${product.name} to wishlist`" :aria-pressed="saved" ...>
+  1 attempt(s), $0.0940
+```
+
+One edit to the shared component cleared the finding on all four product cards. The gate marked the wording as a draft, because a model wrote it.
+
+Add `--finding <fingerprint>` to work on a single finding (fingerprints come from `scan --json`). `fix.budgetUsd` in the config caps the spend for a run.
+
+**Measured on the bundled storefront** (10 eval cases, Claude Fable 5.2, 15 Nov 2026): in the latest run all eight fixable groups were fixed and passed every gate, both proposal-only groups produced a proposal, and no fix was rejected for introducing a new finding. It cost $1.14. That is one small fixture written by this project, so treat it as a smoke test and not as a claim about your codebase. The diffs are in `evals/results/`.
 
 ### Scan your own storefront
 
@@ -227,6 +257,8 @@ flowchart LR
 ```
 
 - The model reads through a small set of tools and can only propose exact-match edits. It never gets a shell, network access or write access.
+- Only a component's `<template>` can be changed automatically, and only with a short list of things an accessibility fix needs: naming and ARIA attributes, labels, simple elements. Script, style, new handlers, links and URLs are rejected, because your checks and build run the code afterwards.
+- Your dev server, checks and build never receive the API key.
 - `.env` files, denied paths and large files are never sent.
 - AltShift never pushes to protected branches, merges or force-pushes. A person reviews every pull request.
 - No telemetry.
@@ -248,8 +280,8 @@ It is also not an overlay. It changes your source code through pull requests and
 | Milestone | Scope                                                                                | State   |
 | --------- | ------------------------------------------------------------------------------------ | ------- |
 | 1         | Scan engine, targets and journeys, fingerprints, `altshift scan`, Nuxt fixture       | Built   |
-| 2         | Nuxt adapter, fix engine with tools, gates and model routing, `fix --dry-run`, evals | Partly  |
-| 3         | Pull request delivery, evidence pack, GitHub Action                                  | Planned |
+| 2         | Nuxt adapter, fix engine with tools, gates and model routing, `fix --dry-run`, evals | Built   |
+| 3         | Pull request delivery, evidence pack, GitHub Action                                  | Next    |
 | 4         | Next.js adapter, AccessLint engine option, SARIF import                              | Planned |
 | 5         | Fix-on-label for open pull requests                                                  | Planned |
 | Later     | SvelteKit, Astro, Hydrogen, as people ask                                            | Planned |

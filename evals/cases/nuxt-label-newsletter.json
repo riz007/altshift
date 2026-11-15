@@ -1,0 +1,16 @@
+{
+  "id": "nuxt-label-newsletter",
+  "fixture": "nuxt-app",
+  "target": "/",
+  "checkpoint": "load",
+  "ruleId": "label",
+  "expect": {
+    "outcome": "accepted",
+    "files": ["app/components/NewsletterForm.vue"],
+    "mustContain": ["<label", "for="],
+    "mustNotContain": ["title=", "placeholder=", "aria-labelledby=\"newsletter-title\""],
+    "mustKeep": ["type=\"email\""],
+    "flagged": true
+  },
+  "notes": "A visible <label for> is the fix. An aria-label gives a programmatic name but leaves sighted and voice-control users with a blank box, so it fails this case on purpose."
+}

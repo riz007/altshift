@@ -5,7 +5,8 @@ export type ErrorCode =
   | "dev-server"
   | "browser"
   | "engine-unavailable"
-  | "nothing-to-scan";
+  | "nothing-to-scan"
+  | "run-failed";
 
 export interface AltshiftError {
   code: ErrorCode;

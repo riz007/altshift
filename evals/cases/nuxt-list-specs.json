@@ -1,0 +1,21 @@
+{
+  "id": "nuxt-list-specs",
+  "fixture": "nuxt-app",
+  "target": "/products/trail-mug",
+  "checkpoint": "load",
+  "ruleId": "list",
+  "expect": {
+    "outcome": "accepted",
+    "files": ["app/components/SpecList.vue"],
+    "mustContain": ["<li"],
+    "mustNotContain": [
+      "role=\"presentation\"",
+      "role=\"none\"",
+      "role=\"listitem\"",
+      "role=\"list\"",
+      "<div class=\"specs\""
+    ],
+    "mustKeep": ["<ul class=\"specs\"", "v-for="]
+  },
+  "notes": "The row divs become li elements. Turning the ul into a div would clear the rule and lose the list."
+}

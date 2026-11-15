@@ -11,4 +11,5 @@ export * from "./normalize.js";
 export * from "./result.js";
 export * from "./run-scan.js";
 export * from "./scan.js";
+export * from "./text.js";
 export * from "./types.js";

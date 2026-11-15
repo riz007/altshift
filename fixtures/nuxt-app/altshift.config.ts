@@ -13,5 +13,6 @@ export default defineConfig({
   },
   fix: {
     allowPaths: ["app/**"],
+    budgetUsd: 1.5,
   },
 });

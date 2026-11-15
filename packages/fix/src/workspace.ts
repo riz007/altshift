@@ -14,7 +14,10 @@ interface AppliedFix {
  * so reverting one fix never disturbs another that touched the same file.
  */
 export class Workspace {
-  private readonly originals = new Map<string, { absolute: string; content: string }>();
+  private readonly originals = new Map<
+    string,
+    { absolute: string; content: string }
+  >();
   private fixes: AppliedFix[] = [];
 
   constructor(private readonly policy: PathPolicy) {}
@@ -25,7 +28,10 @@ export class Workspace {
 
   /** Returns false, and changes nothing, when the edits do not apply on top of the active fixes. */
   async apply(id: string, edits: readonly StagedEdit[]): Promise<boolean> {
-    const candidate = [...this.fixes.filter((fix) => fix.id !== id), { id, edits: [...edits] }];
+    const candidate = [
+      ...this.fixes.filter((fix) => fix.id !== id),
+      { id, edits: [...edits] },
+    ];
     return this.write(candidate);
   }
 
@@ -38,26 +44,55 @@ export class Workspace {
     await this.write(this.fixes.filter((fix) => ids.includes(fix.id)));
   }
 
-  /** Put every touched file back the way it was found. */
+  /**
+   * Put every touched file back the way it was found. One file that cannot be restored does not
+   * stop the others: all are attempted, then the failures are reported together.
+   */
   async restore(): Promise<void> {
-    await this.write([]);
+    const failures: string[] = [];
+    for (const [path, original] of this.originals) {
+      try {
+        const current = await readFile(original.absolute, "utf8").catch(
+          () => undefined,
+        );
+        if (current !== original.content)
+          await this.overwrite(path, original.absolute, original.content);
+      } catch (error) {
+        failures.push(
+          `${path}: ${error instanceof Error ? error.message : String(error)}`,
+        );
+      }
+    }
+    this.fixes = [];
+    if (failures.length > 0)
+      throw new Error(
+        `Could not restore every file. Check these by hand:\n${failures.join("\n")}`,
+      );
   }
 
   private async write(fixes: AppliedFix[]): Promise<boolean> {
     const contents = new Map<string, string>();
     for (const fix of fixes) {
       for (const edit of fix.edits) {
-        const current = contents.get(edit.path) ?? (await this.original(edit.path));
+        const current =
+          contents.get(edit.path) ?? (await this.original(edit.path));
         if (current === undefined) return false;
         const at = current.indexOf(edit.oldString);
-        if (at === -1 || current.indexOf(edit.oldString, at + 1) !== -1) return false;
-        contents.set(edit.path, current.slice(0, at) + edit.newString + current.slice(at + edit.oldString.length));
+        if (at === -1 || current.indexOf(edit.oldString, at + 1) !== -1)
+          return false;
+        contents.set(
+          edit.path,
+          current.slice(0, at) +
+            edit.newString +
+            current.slice(at + edit.oldString.length),
+        );
       }
     }
 
     for (const [path, original] of this.originals) {
       const wanted = contents.get(path) ?? original.content;
-      if ((await readFile(original.absolute, "utf8")) !== wanted) await this.overwrite(path, original.absolute, wanted);
+      if ((await readFile(original.absolute, "utf8")) !== wanted)
+        await this.overwrite(path, original.absolute, wanted);
     }
     this.fixes = fixes;
     return true;
@@ -65,12 +100,21 @@ export class Workspace {
 
   // Project commands run between writes. If one of them swapped the file for a link, stop:
   // writing through it could land anywhere.
-  private async overwrite(path: string, absolute: string, content: string): Promise<void> {
+  private async overwrite(
+    path: string,
+    absolute: string,
+    content: string,
+  ): Promise<void> {
     const file = await resolveAllowedFile(this.policy, path);
     if (!file.ok || file.absolute !== absolute) {
-      throw new Error(`Refusing to write ${path}: it no longer points at the file that was read.`);
+      throw new Error(
+        `Refusing to write ${path}: it no longer points at the file that was read.`,
+      );
     }
-    const handle = await open(absolute, constants.O_WRONLY | constants.O_TRUNC | constants.O_NOFOLLOW);
+    const handle = await open(
+      absolute,
+      constants.O_WRONLY | constants.O_TRUNC | constants.O_NOFOLLOW,
+    );
     try {
       await handle.writeFile(content);
     } finally {
