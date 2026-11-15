@@ -1,4 +1,4 @@
-import { type Finding, HONESTY, type ScanReport } from "altshift";
+import { type Finding, HONESTY, type ScanReport } from "@ariamend/core";
 import { describe, expect, it } from "vitest";
 import { formatScanReport } from "./format.js";
 

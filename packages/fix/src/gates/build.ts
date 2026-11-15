@@ -1,4 +1,4 @@
-import type { CommandResult } from "altshift";
+import type { CommandResult } from "@ariamend/core";
 import type { GateResult } from "../types.js";
 import { describeFailure } from "./checks.js";
 

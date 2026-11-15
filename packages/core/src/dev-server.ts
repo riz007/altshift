@@ -33,7 +33,7 @@ export async function startDevServer(options: DevServerOptions): Promise<Result<
     if (process.env.CI) {
       return fail(
         "dev-server",
-        `Something is already listening on ${options.url}. AltShift must start the dev server itself in CI.`,
+        `Something is already listening on ${options.url}. Ariamend must start the dev server itself in CI.`,
       );
     }
     return ok({ reused: true, stop: async () => {} });

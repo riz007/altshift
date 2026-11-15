@@ -71,11 +71,11 @@ export const configSchema = z.strictObject({
 });
 
 /** What users write. Every field is optional. */
-export type AltshiftConfig = z.input<typeof configSchema>;
+export type AriamendConfig = z.input<typeof configSchema>;
 /** What the runner uses, with defaults filled in. */
 export type ResolvedConfig = z.output<typeof configSchema>;
 
-export function defineConfig(config: AltshiftConfig): AltshiftConfig {
+export function defineConfig(config: AriamendConfig): AriamendConfig {
   return config;
 }
 

@@ -1,5 +1,5 @@
-import type { SourceHint } from "@altshift/adapters";
-import { type Finding, isSimpleGlob, matchesGlob } from "altshift";
+import type { SourceHint } from "@ariamend/adapters";
+import { type Finding, isSimpleGlob, matchesGlob } from "@ariamend/core";
 import { z } from "zod";
 import type { EditSession } from "../session.js";
 import type { DesignTokens } from "./design-tokens.js";

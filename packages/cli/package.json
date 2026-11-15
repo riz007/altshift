@@ -1,21 +1,59 @@
 {
-  "name": "@altshift/cli",
-  "version": "0.0.0",
-  "description": "altshift command line.",
+  "name": "ariamend",
+  "version": "0.1.0",
+  "description": "Fixes accessibility findings in your storefront's source code, proves each fix with plain-code gates, and opens one reviewed pull request with an evidence pack.",
   "license": "MIT",
   "type": "module",
+  "keywords": [
+    "accessibility",
+    "a11y",
+    "wcag",
+    "axe",
+    "nuxt",
+    "vue",
+    "playwright",
+    "github-action"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/riz007/altshift.git",
+    "directory": "packages/cli"
+  },
+  "engines": {
+    "node": ">=22.18"
+  },
   "bin": {
-    "altshift": "./dist/index.js"
+    "ariamend": "./dist/cli.js"
+  },
+  "exports": {
+    ".": {
+      "source": "./src/api.ts",
+      "types": "./dist/api.d.ts",
+      "import": "./dist/api.js"
+    },
+    "./package.json": "./package.json"
   },
   "files": [
-    "dist"
+    "dist",
+    "prompts",
+    "README.md"
   ],
   "scripts": {
-    "build": "tsup src/index.ts --format esm --clean",
+    "build": "tsup && rm -rf prompts && cp -R ../fix/prompts prompts",
     "typecheck": "tsc --noEmit -p ."
   },
   "dependencies": {
-    "@altshift/fix": "workspace:*",
-    "altshift": "workspace:*"
+    "@actions/core": "^3.0.1",
+    "@actions/github": "^9.1.1",
+    "@anthropic-ai/sdk": "^1.8.0",
+    "@axe-core/playwright": "^4.14.0",
+    "playwright": "^1.65.1",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@ariamend/action": "workspace:*",
+    "@ariamend/core": "workspace:*",
+    "@ariamend/fix": "workspace:*",
+    "@ariamend/github": "workspace:*"
   }
 }

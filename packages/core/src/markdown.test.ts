@@ -15,7 +15,18 @@ describe("escapeUntrusted", () => {
   });
 });
 
+describe("escapeUntrusted entities", () => {
+  it("escapes ampersands so entities cannot become mentions or tags", () => {
+    expect(escapeUntrusted("&#64;octocat &lt;img&gt;")).toBe("&amp;\\#64;octocat &amp;lt;img&amp;gt;");
+  });
+});
+
 describe("inlineCode", () => {
+  it("escapes pipes only inside table cells", () => {
+    expect(inlineCode("a|b")).toBe("` a|b `");
+    expect(inlineCode("a|b", 200, true)).toBe("` a\\|b `");
+  });
+
   it("uses a longer fence than any backtick run inside", () => {
     expect(inlineCode("a ``b`` c")).toBe("``` a ``b`` c ```");
   });

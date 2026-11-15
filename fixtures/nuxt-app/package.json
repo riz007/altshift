@@ -1,5 +1,5 @@
 {
-  "name": "@altshift/fixture-nuxt",
+  "name": "@ariamend/fixture-nuxt",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -12,9 +12,10 @@
     "vue": "3.5.45"
   },
   "devDependencies": {
-    "@altshift/adapters": "workspace:*",
-    "@altshift/fix": "workspace:*",
-    "altshift": "workspace:*",
+    "@ariamend/adapters": "workspace:*",
+    "@ariamend/core": "workspace:*",
+    "@ariamend/fix": "workspace:*",
+    "ariamend": "workspace:*",
     "playwright": "^1.65.1"
   }
 }

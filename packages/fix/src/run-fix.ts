@@ -1,15 +1,13 @@
-import {
-  adapterFor,
-  detectAdapter,
-  type FrameworkAdapter,
-  type SourceHint,
-} from "@altshift/adapters";
+import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
+import { join } from "node:path";
+import { setTimeout as sleep } from "node:timers/promises";
+import { adapterFor, detectAdapter, type FrameworkAdapter, type SourceHint } from "@ariamend/adapters";
 import {
   axeEngine,
   type DevServer,
   errorMessage,
-  fail,
   type Finding,
+  fail,
   type Journey,
   loadConfig,
   loadJourneys,
@@ -19,52 +17,61 @@ import {
   runCommand,
   scanTargets,
   startDevServer,
-} from "altshift";
-import { readFile } from "node:fs/promises";
-import { join } from "node:path";
-import { setTimeout as sleep } from "node:timers/promises";
+} from "@ariamend/core";
 import { type Browser, chromium } from "playwright";
 import { Agent, type AgentStop, type ModelClient } from "./agent.js";
+import type { EvidenceScreenshot } from "./evidence.js";
 import {
   buildGate,
   checksGate,
-  rescanGate,
   type RescanInput,
+  rescanGate,
   safetyGate,
   scopeGate,
   visualGate,
 } from "./gates/index.js";
 import { pixelDiffRatio } from "./gates/visual.js";
+import { loadSfcParser, type SfcParse } from "./gates/vue-sfc.js";
 import { resolveModels } from "./models.js";
 import type { PathPolicy } from "./paths.js";
 import { requirePrice, UnknownPriceError } from "./pricing.js";
 import { gateFeedback, groupMessage, loadFixPrompt } from "./prompt.js";
 import { EditSession } from "./session.js";
-import {
-  collectCssVariables,
-  type DesignTokens,
-} from "./tools/design-tokens.js";
+import { collectCssVariables, type DesignTokens } from "./tools/design-tokens.js";
 import { listAllowedFiles } from "./tools/files.js";
 import type { FindingContext, ToolContext } from "./tools/index.js";
 import { triage } from "./triage.js";
-import type {
-  Attempt,
-  FindingGroup,
-  FixOutcome,
-  FixRunReport,
-  GateResult,
-} from "./types.js";
+import type { Attempt, FindingGroup, FixOutcome, FixRunReport, GateResult } from "./types.js";
 import { Workspace } from "./workspace.js";
 
 export interface RunFixOptions {
   cwd: string;
   configPath?: string;
-  /** Only dry runs exist so far: fixes are gated, reported, then taken back out. */
-  dryRun: true;
+  /** Either way the working tree is restored. A real run also returns the gated file contents for delivery. */
+  dryRun: boolean;
   client: ModelClient;
+  /** Fingerprints an open Ariamend pull request already fixes. They are skipped. */
+  coveredByOpenPr?: ReadonlySet<string>;
+  /** Files that pull request already changes, relative to the project root. A fix that needs one waits. */
+  lockedFiles?: ReadonlySet<string>;
+  /** Where to save before and after screenshots of accepted fixes. */
+  screenshotDir?: string;
+  /** Override fix.maxFixesPerRun and fix.budgetUsd from the config. */
+  maxFixes?: number;
+  budgetUsd?: number;
   /** Restrict the run to the group that contains this fingerprint. */
   onlyFinding?: string;
   log?: (line: string) => void;
+}
+
+export interface FixRun {
+  report: FixRunReport;
+  /** Project root, where the config file lives. */
+  root: string;
+  /** Final content of every file changed by an accepted fix. Empty for a dry run. */
+  files: Array<{ path: string; content: string }>;
+  /** Screenshot files per group id, relative to screenshotDir. */
+  screenshots: Map<string, EvidenceScreenshot[]>;
 }
 
 const GROUP_BUDGET_SHARE = 0.25;
@@ -92,6 +99,8 @@ interface Run {
   client: ModelClient;
   log: (line: string) => void;
   spentUsd: number;
+  lockedFiles: ReadonlySet<string>;
+  parse: SfcParse;
 }
 
 async function snapshot(run: Run): Promise<Snapshot> {
@@ -106,19 +115,9 @@ async function snapshot(run: Run): Promise<Snapshot> {
     tags: run.config.scan.tags,
     exclude: run.config.targets.exclude,
     onCheckpoint: async ({ page, target, checkpoint, findings }) => {
-      screenshots.set(
-        `${target} | ${checkpoint}`,
-        await page.screenshot({ animations: "disabled", caret: "hide" }),
-      );
+      screenshots.set(`${target} | ${checkpoint}`, await page.screenshot({ animations: "disabled", caret: "hide" }));
       for (const finding of findings) {
-        hints.set(
-          finding.fingerprint,
-          await run.adapter.collectSourceHints(
-            page,
-            finding.selector,
-            run.root,
-          ),
-        );
+        hints.set(finding.fingerprint, await run.adapter.collectSourceHints(page, finding.selector, run.root));
       }
     },
   });
@@ -131,20 +130,13 @@ async function snapshot(run: Run): Promise<Snapshot> {
   };
 }
 
-async function worstPixelRatio(
-  run: Run,
-  before: Snapshot,
-  after: Snapshot,
-): Promise<number> {
+async function worstPixelRatio(run: Run, before: Snapshot, after: Snapshot): Promise<number> {
   const page = await run.browser.newPage();
   try {
     let worst = 0;
     for (const [key, image] of before.screenshots) {
       const other = after.screenshots.get(key);
-      worst = Math.max(
-        worst,
-        other ? await pixelDiffRatio(page, image, other) : 1,
-      );
+      worst = Math.max(worst, other ? await pixelDiffRatio(page, image, other) : 1);
     }
     return worst;
   } finally {
@@ -152,11 +144,7 @@ async function worstPixelRatio(
   }
 }
 
-function toolContext(
-  run: Run,
-  group: FindingGroup,
-  baseline: Snapshot,
-): ToolContext {
+function toolContext(run: Run, group: FindingGroup, baseline: Snapshot): ToolContext {
   const findings = new Map<string, FindingContext>(
     group.findings.map((finding) => [
       finding.fingerprint,
@@ -170,12 +158,7 @@ function toolContext(
   };
 }
 
-function attemptFrom(
-  model: string,
-  stop: AgentStop,
-  context: ToolContext,
-  costUsd: number,
-): Attempt {
+function attemptFrom(model: string, stop: AgentStop, context: ToolContext, costUsd: number): Attempt {
   return {
     model,
     edits: [...context.session.edits],
@@ -200,7 +183,7 @@ async function gate(
 
   results.push(scopeGate(changes, run.policy));
   if (failed()) return { results };
-  results.push(safetyGate(changes));
+  results.push(safetyGate(changes, run.parse));
   if (failed()) return { results };
 
   if (!(await run.workspace.apply(group.id, context.session.edits))) {
@@ -212,13 +195,7 @@ async function gate(
     return { results };
   }
   try {
-    results.push(
-      await checksGate(
-        run.config.app.checks,
-        run.root,
-        run.config.app.commandTimeoutSeconds,
-      ),
-    );
+    results.push(await checksGate(run.config.app.checks, run.root, run.config.app.commandTimeoutSeconds));
     if (failed()) return { results };
 
     await sleep(RELOAD_WAIT_MS);
@@ -247,9 +224,7 @@ async function gate(
     }
 
     const ratio = await worstPixelRatio(run, baseline, after);
-    results.push(
-      visualGate(ratio, run.config.fix.visualDiffThreshold, group.ruleId),
-    );
+    results.push(visualGate(ratio, run.config.fix.visualDiffThreshold, group.ruleId));
     if (failed()) return { results };
     kept = true;
     return { results, after };
@@ -267,8 +242,7 @@ async function fixGroup(
 ): Promise<{ outcome: FixOutcome; after?: Snapshot }> {
   const attempts: Attempt[] = [];
   const context = () => toolContext(run, group, baseline);
-  const spent = () =>
-    attempts.reduce((sum, attempt) => sum + attempt.costUsd, 0);
+  const spent = () => attempts.reduce((sum, attempt) => sum + attempt.costUsd, 0);
   const rejected = (reason: string, failedGate?: GateResult): FixOutcome => ({
     status: "rejected",
     group,
@@ -309,16 +283,21 @@ async function fixGroup(
     if (stop.reason !== "finish") return { outcome: rejected(stop.message) };
 
     const changes = tools.session.changes();
+    const locked = changes.find((change) => run.lockedFiles.has(change.path));
+    if (locked !== undefined) {
+      return {
+        outcome: rejected(
+          `Waiting: the open Ariamend pull request already changes ${locked.path}. This fix will be picked up after it merges.`,
+        ),
+      };
+    }
     if (group.tier === "suggest") {
       // Proposals are shown, never applied, so only the scope gate runs: a proposal must still stay in allowed files.
       const scope = scopeGate(changes, run.policy);
       attempt.gates = [scope];
       if (!scope.passed)
         return {
-          outcome: rejected(
-            `The scope gate failed: ${scope.detail.split("\n")[0]}`,
-            scope,
-          ),
+          outcome: rejected(`The scope gate failed: ${scope.detail.split("\n")[0]}`, scope),
         };
       return { outcome: { status: "suggested", group, attempts, changes } };
     }
@@ -327,18 +306,10 @@ async function fixGroup(
     attempt.gates = gated.results;
     const failedGate = gated.results.find((result) => !result.passed);
     if (failedGate === undefined && gated.after) {
-      const flagged = gated.results
-        .filter((result) => result.flagged)
-        .map((result) => result.detail);
-      const notes = [
-        ...flagged,
-        ...(stop.end.reviewNotes ? [stop.end.reviewNotes] : []),
-      ];
+      const flagged = gated.results.filter((result) => result.flagged).map((result) => result.detail);
+      const notes = [...flagged, ...(stop.end.reviewNotes ? [stop.end.reviewNotes] : [])];
       // The model can ask for review. It can never waive a review that a gate or the tier asked for.
-      const needsHumanReview =
-        stop.end.needsHumanReview ||
-        flagged.length > 0 ||
-        group.tier === "auto-review";
+      const needsHumanReview = stop.end.needsHumanReview || flagged.length > 0 || group.tier === "auto-review";
       return {
         outcome: {
           status: "accepted",
@@ -353,54 +324,81 @@ async function fixGroup(
     }
 
     const reason = `The ${failedGate?.gate} gate failed: ${failedGate?.detail.split("\n")[0]}`;
-    if (tries >= run.config.fix.maxAttemptsPerFinding)
-      return { outcome: rejected(reason, failedGate) };
+    if (tries >= run.config.fix.maxAttemptsPerFinding) return { outcome: rejected(reason, failedGate) };
     tools = context();
-    stop = await agent.resume(
-      tools,
-      gateFeedback(failedGate?.gate ?? "unknown", failedGate?.detail ?? ""),
-    );
+    stop = await agent.resume(tools, gateFeedback(failedGate?.gate ?? "unknown", failedGate?.detail ?? ""));
   }
 }
 
+async function saveScreenshots(
+  dir: string,
+  group: FindingGroup,
+  before: Snapshot,
+  after: Snapshot,
+): Promise<EvidenceScreenshot[]> {
+  await mkdir(dir, { recursive: true });
+  const saved: EvidenceScreenshot[] = [];
+  const keys = [...new Set(group.findings.map((finding) => `${finding.target} | ${finding.checkpoint}`))].sort();
+  for (const [index, key] of keys.entries()) {
+    const was = before.screenshots.get(key);
+    const now = after.screenshots.get(key);
+    if (!was || !now) continue;
+    const [target = "", checkpoint = ""] = key.split(" | ");
+    const names = { before: `${group.id}-${index + 1}-before.png`, after: `${group.id}-${index + 1}-after.png` };
+    await writeFile(join(dir, names.before), was);
+    await writeFile(join(dir, names.after), now);
+    saved.push({ target, checkpoint, ...names });
+  }
+  return saved;
+}
+
+// Read here, by trusted code, so that a project-wide delimiters setting stops the run before any fix.
+async function customDelimiters(root: string): Promise<string | undefined> {
+  const names = await readdir(root).catch(() => [] as string[]);
+  for (const name of names.filter((file) => /^(?:nuxt|vite|vue)\.config\.[cm]?[jt]s$/.test(file)).sort()) {
+    if (/\bdelimiters\b/.test(await readFile(join(root, name), "utf8"))) return name;
+  }
+  return undefined;
+}
+
 /** Scan, triage, fix each group behind the gates, run the build gate, and put the working tree back. */
-export async function runFix(
-  options: RunFixOptions,
-): Promise<Result<FixRunReport>> {
+export async function runFix(options: RunFixOptions): Promise<Result<FixRun>> {
   const log = options.log ?? (() => {});
 
   const loaded = await loadConfig(options.cwd, options.configPath);
   if (!loaded.ok) return loaded;
   const { config, root } = loaded.value;
   if (config.app.dev === undefined)
-    return fail(
-      "config-invalid",
-      "app.dev is required: AltShift fixes against a dev build it starts itself.",
-    );
+    return fail("config-invalid", "app.dev is required: Ariamend fixes against a dev build it starts itself.");
   if (config.scan.engine !== "axe")
-    return fail(
-      "engine-unavailable",
-      `The "${config.scan.engine}" engine is not available yet. Use "axe".`,
-    );
+    return fail("engine-unavailable", `The "${config.scan.engine}" engine is not available yet. Use "axe".`);
 
-  const adapter =
-    config.app.framework === "auto"
-      ? await detectAdapter(root)
-      : adapterFor(config.app.framework);
+  const adapter = config.app.framework === "auto" ? await detectAdapter(root) : adapterFor(config.app.framework);
   if (adapter === undefined)
-    return fail(
-      "config-invalid",
-      "No supported framework found. AltShift can fix Nuxt projects so far.",
-    );
+    return fail("config-invalid", "No supported framework found. Ariamend can fix Nuxt projects so far.");
 
   const models = resolveModels(config.fix.models);
   try {
     requirePrice(models.fix);
     requirePrice(models.fallback);
   } catch (error) {
-    if (error instanceof UnknownPriceError)
-      return fail("config-invalid", error.message);
+    if (error instanceof UnknownPriceError) return fail("config-invalid", error.message);
     throw error;
+  }
+
+  const parse = loadSfcParser(root);
+  if (parse === undefined) {
+    return fail(
+      "config-invalid",
+      `Could not load vue/compiler-sfc from ${root}. Install the project's dependencies first.`,
+    );
+  }
+  const delimiters = await customDelimiters(root);
+  if (delimiters !== undefined) {
+    return fail(
+      "config-invalid",
+      `${delimiters} sets custom Vue template delimiters, which the safety gate cannot read.`,
+    );
   }
 
   const journeys = await loadJourneys(root, config.targets.journeys);
@@ -471,41 +469,38 @@ export async function runFix(
       client: options.client,
       log,
       spentUsd: 0,
+      lockedFiles: options.lockedFiles ?? new Set(),
+      parse,
     };
 
     log("Scanning");
     let baseline = await snapshot(run);
     if (baseline.failures.length > 0) {
       const first = baseline.failures[0];
-      return fail(
-        "config-invalid",
-        `Could not scan ${first?.target}: ${first?.message}`,
-      );
+      return fail("config-invalid", `Could not scan ${first?.target}: ${first?.message}`);
     }
 
     const triaged = triage({
       findings: baseline.findings,
       hints: baseline.hints,
       ruleTiers: config.fix.ruleTiers,
-      maxGroups: config.fix.maxFixesPerRun,
+      maxGroups: options.maxFixes ?? config.fix.maxFixesPerRun,
+      ...(options.coveredByOpenPr ? { coveredByOpenPr: options.coveredByOpenPr } : {}),
     });
     const groups = options.onlyFinding
       ? triaged.groups.filter((group) =>
-          group.findings.some(
-            (finding: Finding) => finding.fingerprint === options.onlyFinding,
-          ),
+          group.findings.some((finding: Finding) => finding.fingerprint === options.onlyFinding),
         )
       : triaged.groups;
     if (options.onlyFinding && groups.length === 0) {
-      return fail(
-        "config-invalid",
-        `No fixable finding has the fingerprint ${options.onlyFinding}.`,
-      );
+      return fail("config-invalid", `No fixable finding has the fingerprint ${options.onlyFinding}.`);
     }
 
+    const budgetUsd = options.budgetUsd ?? config.fix.budgetUsd;
+    const screenshots = new Map<string, EvidenceScreenshot[]>();
     const outcomes: FixOutcome[] = [];
     for (const group of groups) {
-      const remaining = config.fix.budgetUsd - run.spentUsd;
+      const remaining = budgetUsd - run.spentUsd;
       if (remaining <= 0) {
         outcomes.push({
           status: "skipped",
@@ -517,26 +512,19 @@ export async function runFix(
       }
       log(`Fixing ${group.ruleId} (${group.findings.length} finding(s))`);
       // One group may not take the whole run's budget.
-      const share = Math.min(
-        remaining,
-        config.fix.budgetUsd * GROUP_BUDGET_SHARE,
-      );
+      const share = Math.min(remaining, budgetUsd * GROUP_BUDGET_SHARE);
+      const before = baseline;
       const { outcome, after } = await fixGroup(run, group, baseline, share);
-      run.spentUsd += outcome.attempts.reduce(
-        (sum, attempt) => sum + attempt.costUsd,
-        0,
-      );
+      if (after && options.screenshotDir)
+        screenshots.set(group.id, await saveScreenshots(options.screenshotDir, group, before, after));
+      run.spentUsd += outcome.attempts.reduce((sum, attempt) => sum + attempt.costUsd, 0);
       outcomes.push(outcome);
       if (after) baseline = after;
-      log(
-        `  ${outcome.status}${outcome.status === "rejected" ? `: ${outcome.reason}` : ""}`,
-      );
+      log(`  ${outcome.status}${outcome.status === "rejected" ? `: ${outcome.reason}` : ""}`);
     }
 
     // The build writes to the same output folders as the dev server, so the server stops first.
-    const accepted = outcomes.filter(
-      (outcome) => outcome.status === "accepted",
-    );
+    const accepted = outcomes.filter((outcome) => outcome.status === "accepted");
     const build = config.app.build;
     if (build === undefined) {
       for (const outcome of accepted) {
@@ -561,10 +549,11 @@ export async function runFix(
           return runCommand(build, root, config.app.commandTimeoutSeconds);
         },
       });
+      // The last build tried may have been a set that failed. Only what passed is kept, and delivered.
+      await workspace.keepOnly(built.kept);
       for (const [index, outcome] of outcomes.entries()) {
         if (outcome.status !== "accepted") continue;
-        if (built.kept.includes(outcome.group.id))
-          outcome.attempts.at(-1)?.gates.push(built.result);
+        if (built.kept.includes(outcome.group.id)) outcome.attempts.at(-1)?.gates.push(built.result);
         else {
           const result: GateResult = {
             gate: "build",
@@ -583,30 +572,24 @@ export async function runFix(
       }
     }
 
-    return ok({
+    // Read from memory, before cleanup puts the files back.
+    const gated = options.dryRun ? [] : await workspace.contents();
+    const report: FixRunReport = {
       schemaVersion: 1,
       mode: "debt",
       dryRun: options.dryRun,
       outcomes,
       skippedFindings: {
-        reportTier: triaged.skipped.filter(
-          (item) => item.reason === "report-tier",
-        ).length,
-        openPr: triaged.skipped.filter((item) => item.reason === "open-pr")
-          .length,
+        reportTier: triaged.skipped.filter((item) => item.reason === "report-tier").length,
+        openPr: triaged.skipped.filter((item) => item.reason === "open-pr").length,
         limit: triaged.skipped.filter((item) => item.reason === "limit").length,
       },
       totalCostUsd: run.spentUsd,
-      budgetUsd: config.fix.budgetUsd,
-      models: [
-        ...new Set(
-          outcomes.flatMap((outcome) =>
-            outcome.attempts.map((attempt) => attempt.model),
-          ),
-        ),
-      ].sort(),
+      budgetUsd,
+      models: [...new Set(outcomes.flatMap((outcome) => outcome.attempts.map((attempt) => attempt.model)))].sort(),
       promptVersion: prompt.version,
-    });
+    };
+    return ok({ report, root, files: gated, screenshots });
   } catch (error) {
     return fail("run-failed", errorMessage(error));
   } finally {

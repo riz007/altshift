@@ -1,5 +1,6 @@
 import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
+import { ExitCode, matchesGlob, printable } from "@ariamend/core";
 import {
   anthropicClient,
   type CaseResult,
@@ -9,8 +10,7 @@ import {
   runFix,
   scoreCase,
   summarize,
-} from "@altshift/fix";
-import { ExitCode, matchesGlob, printable } from "altshift";
+} from "@ariamend/fix";
 import type { Io } from "./run.js";
 
 const percent = (value: number | null) => (value === null ? "n/a" : `${(value * 100).toFixed(0)}%`);
@@ -19,7 +19,7 @@ const dollars = (value: number | null) => (value === null ? "n/a" : `$${value.to
 /** Run the fix engine on each fixture that has cases, score the cases, and save the result. Internal. */
 export async function runEvals(io: Io, only: string | undefined): Promise<ExitCode> {
   if (!process.env.ANTHROPIC_API_KEY) {
-    io.stderr("altshift eval: ANTHROPIC_API_KEY is not set. Put it in .env.local or export it.\n");
+    io.stderr("ariamend eval: ANTHROPIC_API_KEY is not set. Put it in .env.local or export it.\n");
     return ExitCode.Failure;
   }
 
@@ -28,7 +28,7 @@ export async function runEvals(io: Io, only: string | undefined): Promise<ExitCo
   try {
     names = (await readdir(caseDir)).filter((name) => name.endsWith(".json")).sort();
   } catch {
-    io.stderr(`altshift eval: no evals/cases folder in ${io.cwd}. Run it from the AltShift repo root.\n`);
+    io.stderr(`ariamend eval: no evals/cases folder in ${io.cwd}. Run it from the Ariamend repo root.\n`);
     return ExitCode.Failure;
   }
 
@@ -38,18 +38,18 @@ export async function runEvals(io: Io, only: string | undefined): Promise<ExitCo
     try {
       raw = JSON.parse(await readFile(join(caseDir, name), "utf8"));
     } catch {
-      io.stderr(`altshift eval: ${name} is not valid JSON.\n`);
+      io.stderr(`ariamend eval: ${name} is not valid JSON.\n`);
       return ExitCode.Failure;
     }
     const parsed = evalCaseSchema.safeParse(raw);
     if (!parsed.success) {
-      io.stderr(`altshift eval: ${name} is not a valid case: ${parsed.error.message}\n`);
+      io.stderr(`ariamend eval: ${name} is not a valid case: ${parsed.error.message}\n`);
       return ExitCode.Failure;
     }
     if (only === undefined || matchesGlob(parsed.data.id, only)) cases.push(parsed.data);
   }
   if (cases.length === 0) {
-    io.stderr("altshift eval: no cases matched.\n");
+    io.stderr("ariamend eval: no cases matched.\n");
     return ExitCode.Failure;
   }
 
@@ -65,12 +65,12 @@ export async function runEvals(io: Io, only: string | undefined): Promise<ExitCo
       log: (line) => io.stderr(`  ${printable(line)}\n`),
     });
     if (!run.ok) {
-      io.stderr(`altshift eval: ${fixture}: ${run.error.message}\n`);
+      io.stderr(`ariamend eval: ${fixture}: ${run.error.message}\n`);
       return ExitCode.Failure;
     }
-    reports.push(run.value);
+    reports.push(run.value.report);
     for (const item of cases.filter((candidate) => candidate.fixture === fixture))
-      results.push(scoreCase(item, run.value));
+      results.push(scoreCase(item, run.value.report));
   }
 
   const summary = summarize(cases, results, reports);

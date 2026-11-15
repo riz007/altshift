@@ -1,7 +1,7 @@
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { ExitCode } from "altshift";
+import { ExitCode } from "@ariamend/core";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { main } from "./run.js";
 
@@ -19,7 +19,7 @@ const io = () => ({
 });
 
 beforeEach(async () => {
-  dir = await mkdtemp(join(tmpdir(), "altshift-cli-"));
+  dir = await mkdtemp(join(tmpdir(), "ariamend-cli-"));
   out = "";
   err = "";
 });
@@ -27,10 +27,10 @@ afterEach(async () => {
   await rm(dir, { recursive: true, force: true });
 });
 
-describe("altshift", () => {
+describe("ariamend", () => {
   it("prints usage for --help", async () => {
     expect(await main(["--help"], io())).toBe(ExitCode.Completed);
-    expect(out).toContain("altshift scan");
+    expect(out).toContain("ariamend scan");
   });
 
   it("exits 2 with usage when no command or an unknown one is given", async () => {
@@ -48,8 +48,29 @@ describe("altshift", () => {
     expect(await main(["init"], io())).toBe(ExitCode.Failure);
     expect(err).toContain("not available yet");
 
-    expect(await main(["fix"], io())).toBe(ExitCode.Failure);
-    expect(err).toContain("only supports --dry-run");
+    expect(await main(["fix", "--mode", "pr"], io())).toBe(ExitCode.Failure);
+    expect(err).toContain('mode "pr" is not available yet');
+  });
+
+  it("a real fix run refuses to start without a GitHub token and repository", async () => {
+    const saved = {
+      key: process.env.ANTHROPIC_API_KEY,
+      token: process.env.GITHUB_TOKEN,
+      repo: process.env.GITHUB_REPOSITORY,
+    };
+    process.env.ANTHROPIC_API_KEY = "sk-test";
+    delete process.env.GITHUB_TOKEN;
+    delete process.env.GITHUB_REPOSITORY;
+    try {
+      expect(await main(["fix"], io())).toBe(ExitCode.Failure);
+      expect(err).toContain("needs GITHUB_TOKEN and GITHUB_REPOSITORY");
+      expect(await main(["fix", "--finding", "abc"], io())).toBe(ExitCode.Failure);
+      expect(err).toContain("--finding only works with --dry-run");
+    } finally {
+      process.env.ANTHROPIC_API_KEY = saved.key ?? "";
+      if (saved.token !== undefined) process.env.GITHUB_TOKEN = saved.token;
+      if (saved.repo !== undefined) process.env.GITHUB_REPOSITORY = saved.repo;
+    }
   });
 
   it("fix exits 2 without an API key, before starting anything", async () => {
@@ -59,11 +80,11 @@ describe("altshift", () => {
 
   it("scan exits 2 when there is no config", async () => {
     expect(await main(["scan"], io())).toBe(ExitCode.Failure);
-    expect(err).toContain("No altshift.config.ts");
+    expect(err).toContain("No ariamend.config.ts");
   });
 
   it("scan exits 2 when the config has no dev server", async () => {
-    await writeFile(join(dir, "altshift.config.mjs"), "export default {};");
+    await writeFile(join(dir, "ariamend.config.mjs"), "export default {};");
 
     expect(await main(["scan"], io())).toBe(ExitCode.Failure);
     expect(err).toContain("app.dev is required");
@@ -71,7 +92,7 @@ describe("altshift", () => {
 
   it("scan exits 2 when the dev command fails, without starting a browser", async () => {
     await writeFile(
-      join(dir, "altshift.config.mjs"),
+      join(dir, "ariamend.config.mjs"),
       'export default { app: { dev: { command: "exit 7", url: "http://127.0.0.1:9/", readyTimeoutSeconds: 5 } } };',
     );
 

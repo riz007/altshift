@@ -6,7 +6,7 @@ import { configSchema, type ResolvedConfig } from "./config.js";
 import type { Journey } from "./journey.js";
 import { errorMessage, fail, ok, type Result } from "./result.js";
 
-const CONFIG_NAMES = ["altshift.config.ts", "altshift.config.mts", "altshift.config.mjs", "altshift.config.js"];
+const CONFIG_NAMES = ["ariamend.config.ts", "ariamend.config.mts", "ariamend.config.mjs", "ariamend.config.js"];
 
 const journeySchema = z.object({
   name: z.string().regex(/^[a-z0-9][a-z0-9-]*$/i, "Journey names use letters, digits and dashes"),
@@ -54,7 +54,7 @@ export async function loadConfig(cwd: string, explicitPath?: string): Promise<Re
       }
     }
     if (path === undefined) {
-      return fail("config-not-found", `No altshift.config.ts in ${cwd}. Pass --config, or create one.`);
+      return fail("config-not-found", `No ariamend.config.ts in ${cwd}. Pass --config, or create one.`);
     }
   }
 

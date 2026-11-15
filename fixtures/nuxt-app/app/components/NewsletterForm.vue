@@ -8,7 +8,7 @@ const done = ref(false);
     <h2 id="newsletter-title">Trail notes, once a month</h2>
     <p v-if="done" role="status">Thanks. Check your inbox to confirm.</p>
     <form v-else class="newsletter__form" @submit.prevent="done = true">
-      <!-- altshift-seed: label email input with no label, placeholder or aria-label -->
+      <!-- ariamend-seed: label email input with no label, placeholder or aria-label -->
       <input v-model="email" class="newsletter__input" type="email" name="email" autocomplete="email" required />
       <button type="submit" class="button">Subscribe</button>
     </form>

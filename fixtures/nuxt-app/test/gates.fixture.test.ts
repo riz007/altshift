@@ -2,15 +2,6 @@ import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { setTimeout as sleep } from "node:timers/promises";
 import {
-  pixelDiffRatio,
-  type RescanInput,
-  rescanGate,
-  safetyGate,
-  scopeGate,
-  visualGate,
-  Workspace,
-} from "@altshift/fix";
-import {
   axeEngine,
   type DevServer,
   type Journey,
@@ -19,7 +10,17 @@ import {
   type ResolvedConfig,
   scanTargets,
   startDevServer,
-} from "altshift";
+} from "@ariamend/core";
+import {
+  loadSfcParser,
+  pixelDiffRatio,
+  type RescanInput,
+  rescanGate,
+  safetyGate,
+  scopeGate,
+  visualGate,
+  Workspace,
+} from "@ariamend/fix";
 import { type Browser, chromium } from "playwright";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
@@ -101,7 +102,9 @@ describe("gates on the nuxt fixture", () => {
     const fixed = CLOSE.replace("@click", 'aria-label="Close cart" @click');
     const changes = [{ path: FILE, before: original, after: original.replace(CLOSE, fixed) }];
     expect(scopeGate(changes, policy).passed).toBe(true);
-    expect(safetyGate(changes)).toMatchObject({ passed: true, flagged: true });
+    const parse = loadSfcParser(root);
+    if (!parse) throw new Error("vue/compiler-sfc not found");
+    expect(safetyGate(changes, parse)).toMatchObject({ passed: true, flagged: true });
 
     expect(await workspace.apply("label", edit(fixed))).toBe(true);
     const after = await afterReload();

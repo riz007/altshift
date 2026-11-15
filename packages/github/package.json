@@ -1,7 +1,7 @@
 {
-  "name": "@altshift/github",
+  "name": "@ariamend/github",
   "version": "0.0.0",
-  "description": "Pull request delivery and Markdown escaping for AltShift.",
+  "description": "Pull request delivery and Markdown escaping for Ariamend.",
   "license": "MIT",
   "type": "module",
   "exports": {
@@ -20,6 +20,7 @@
   },
   "dependencies": {
     "@actions/github": "^9.1.1",
-    "altshift": "workspace:*"
-  }
+    "@ariamend/core": "workspace:*"
+  },
+  "private": true
 }

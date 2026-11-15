@@ -14,7 +14,7 @@ const saved = ref(false);
         <NuxtLink :to="`/products/${product.slug}`">{{ product.name }}</NuxtLink>
       </h3>
       <p class="product-card__price">€{{ product.price }}</p>
-      <!-- altshift-seed: button-name icon-only wishlist toggle, repeated on every card -->
+      <!-- ariamend-seed: button-name icon-only wishlist toggle, repeated on every card -->
       <button type="button" class="icon-button product-card__wishlist" :aria-pressed="saved" @click="saved = !saved">
         <svg aria-hidden="true" viewBox="0 0 24 24" width="20" height="20" :fill="saved ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="2">
           <path d="M12 21s-7-4.5-9.5-9A5.5 5.5 0 0 1 12 6a5.5 5.5 0 0 1 9.5 6c-2.5 4.5-9.5 9-9.5 9z" />

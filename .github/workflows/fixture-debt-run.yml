@@ -1,0 +1,69 @@
+# End-to-end proof: runs the Action from this checkout against the Nuxt fixture and opens a real
+# pull request. That pull request removes the fixture's seeded violations, which the tests depend on,
+# so it must never be merged. Manual only: every run spends API credit.
+
+name: Fixture debt run
+
+on:
+  workflow_dispatch:
+    inputs:
+      max-fixes:
+        description: Groups to fix (each costs about $0.10)
+        default: "3"
+      budget-usd:
+        description: Spending cap for this run
+        default: "0.50"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: fixture-debt-run
+  cancel-in-progress: false
+
+jobs:
+  debt:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      # Ariamend commits through the GitHub API, so the checkout does not need to keep a token on disk.
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+
+      - id: ariamend
+        uses: ./
+        with:
+          config: fixtures/nuxt-app/ariamend.config.ts
+          working-directory: fixtures/nuxt-app
+          anthropic-api-key: ${{ secrets.ANTHROPIC_API_KEY }}
+          max-fixes: ${{ inputs.max-fixes }}
+          budget-usd: ${{ inputs.budget-usd }}
+
+      - name: Mark the pull request as a fixture run
+        if: steps.ariamend.outputs.pr-url != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_URL: ${{ steps.ariamend.outputs.pr-url }}
+        run: |
+          gh pr comment "$PR_URL" --body "This pull request comes from the fixture proof workflow. Do not merge it: the fixture's seeded violations must stay in place for the tests. Close it when you have looked at it."
+
+      - name: Upload the evidence pack
+        if: always() && steps.ariamend.outputs.evidence-path != ''
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: ariamend-evidence
+          path: ${{ steps.ariamend.outputs.evidence-path }}
+          retention-days: 14
+          # The pack lives in .ariamend/, and hidden folders are skipped unless asked for.
+          include-hidden-files: true

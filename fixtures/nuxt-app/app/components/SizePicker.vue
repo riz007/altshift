@@ -5,7 +5,7 @@ const size = defineModel<string>({ default: "one" });
 <template>
   <div class="field">
     <span class="size-picker__label">Size</span>
-    <!-- altshift-seed: select-name the visible "Size" text is not associated with the select -->
+    <!-- ariamend-seed: select-name the visible "Size" text is not associated with the select -->
     <select v-model="size" class="size-picker__select">
       <option value="one">One size</option>
       <option value="gift">Gift boxed</option>

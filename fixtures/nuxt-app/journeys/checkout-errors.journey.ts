@@ -1,4 +1,4 @@
-import { defineJourney } from "altshift";
+import { defineJourney } from "ariamend";
 
 // Stops at validation errors. The fixture has no payment step and never places an order.
 export default defineJourney({

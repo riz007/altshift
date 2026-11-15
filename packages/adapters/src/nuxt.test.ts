@@ -8,7 +8,7 @@ import { toSourceHints } from "./vue-hints.js";
 
 let dir: string;
 beforeEach(async () => {
-  dir = await mkdtemp(join(tmpdir(), "altshift-adapter-"));
+  dir = await mkdtemp(join(tmpdir(), "ariamend-adapter-"));
 });
 afterEach(async () => {
   await rm(dir, { recursive: true, force: true });

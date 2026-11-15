@@ -7,15 +7,15 @@ import { loadConfig, loadJourneys } from "./load.js";
 let dir: string;
 
 beforeEach(async () => {
-  dir = await mkdtemp(join(tmpdir(), "altshift-load-"));
+  dir = await mkdtemp(join(tmpdir(), "ariamend-load-"));
 });
 afterEach(async () => {
   await rm(dir, { recursive: true, force: true });
 });
 
 describe("loadConfig", () => {
-  it("finds altshift.config.* in the working directory and fills defaults", async () => {
-    await writeFile(join(dir, "altshift.config.mjs"), 'export default { targets: { pages: ["/", "/cart"] } };');
+  it("finds ariamend.config.* in the working directory and fills defaults", async () => {
+    await writeFile(join(dir, "ariamend.config.mjs"), 'export default { targets: { pages: ["/", "/cart"] } };');
 
     const result = await loadConfig(dir);
 
@@ -26,7 +26,7 @@ describe("loadConfig", () => {
 
   it("loads a TypeScript config", async () => {
     await writeFile(
-      join(dir, "altshift.config.ts"),
+      join(dir, "ariamend.config.ts"),
       'const pages: string[] = ["/typed"];\nexport default { targets: { pages } };',
     );
 
@@ -44,7 +44,7 @@ describe("loadConfig", () => {
   });
 
   it("names the bad field in an invalid config", async () => {
-    await writeFile(join(dir, "altshift.config.mjs"), 'export default { scan: { engine: "lighthouse" } };');
+    await writeFile(join(dir, "ariamend.config.mjs"), 'export default { scan: { engine: "lighthouse" } };');
 
     const result = await loadConfig(dir);
 

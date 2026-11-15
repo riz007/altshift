@@ -29,7 +29,7 @@ describe("resolveModels", () => {
   });
 
   it("lets env override config", () => {
-    const models = resolveModels({ fix: "from-config" }, { ALTSHIFT_MODEL_FIX: "from-env" });
+    const models = resolveModels({ fix: "from-config" }, { ARIAMEND_MODEL_FIX: "from-env" });
     expect(models.fix).toBe("from-env");
   });
 });

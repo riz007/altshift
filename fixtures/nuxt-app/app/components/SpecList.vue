@@ -3,7 +3,7 @@ defineProps<{ specs: string[][] }>();
 </script>
 
 <template>
-  <!-- altshift-seed: list rows are divs directly inside a ul -->
+  <!-- ariamend-seed: list rows are divs directly inside a ul -->
   <ul class="specs">
     <div v-for="[label, value] in specs" :key="label" class="specs__row">
       <span class="specs__label">{{ label }}</span>

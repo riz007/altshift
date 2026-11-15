@@ -1,5 +1,5 @@
-import { type FixOutcome, type FixRunReport, type FixTier, lineDiff, tierFor } from "@altshift/fix";
-import { type Finding, HONESTY, printable, type ScanReport } from "altshift";
+import { type Finding, HONESTY, printable, type ScanReport } from "@ariamend/core";
+import { type FixOutcome, type FixRunReport, type FixTier, lineDiff, tierFor } from "@ariamend/fix";
 
 const TIER_ORDER: FixTier[] = ["auto", "auto-review", "suggest", "report"];
 
@@ -9,7 +9,7 @@ function groupKey(finding: Pick<Finding, "target" | "checkpoint">): string {
 
 export function formatScanReport(report: ScanReport, ruleTiers: Readonly<Record<string, FixTier>> = {}): string {
   const lines: string[] = [];
-  lines.push(`AltShift scan: ${report.engine.id} ${report.engine.version}, ${report.scanned.length} checkpoint(s)`, "");
+  lines.push(`Ariamend scan: ${report.engine.id} ${report.engine.version}, ${report.scanned.length} checkpoint(s)`, "");
 
   const groups = new Map<string, Finding[]>();
   for (const checkpoint of report.scanned) groups.set(groupKey(checkpoint), []);
@@ -63,7 +63,7 @@ function diffLines(outcome: FixOutcome): string[] {
 }
 
 export function formatFixReport(report: FixRunReport): string {
-  const lines: string[] = [`AltShift fix${report.dryRun ? " (dry run: your files are unchanged)" : ""}`, ""];
+  const lines: string[] = [`Ariamend fix${report.dryRun ? " (dry run: your files are unchanged)" : ""}`, ""];
 
   for (const outcome of report.outcomes) {
     const { group } = outcome;

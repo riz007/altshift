@@ -7,7 +7,7 @@ const OUTPUT_TAIL_LINES = 40;
 // The customer's commands run code the model may have edited. They never need our keys,
 // and they must not be able to write to the files GitHub Actions reads back into later steps.
 const WITHHELD_ENV =
-  /^(ANTHROPIC_|CLAUDE_|ALTSHIFT_|INPUT_|AWS_BEARER_TOKEN_BEDROCK$|(GITHUB|GH)(_ENTERPRISE)?_TOKEN$|ACTIONS_ID_TOKEN|ACTIONS_RUNTIME_TOKEN|GITHUB_(ENV|PATH|OUTPUT|STATE|STEP_SUMMARY)$)/i;
+  /^(ANTHROPIC_|CLAUDE_|ARIAMEND_|INPUT_|AWS_BEARER_TOKEN_BEDROCK$|(GITHUB|GH)(_ENTERPRISE)?_TOKEN$|ACTIONS_ID_TOKEN|ACTIONS_RUNTIME_TOKEN|GITHUB_(ENV|PATH|OUTPUT|STATE|STEP_SUMMARY)$)/i;
 
 // Stays in the child's environment, because the project may need it, but never appears in what we keep of the output.
 const SENSITIVE_NAME = /TOKEN|SECRET|KEY|PASSWORD|PASSWD|CREDENTIAL|AUTH|DSN/i;

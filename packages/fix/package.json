@@ -1,7 +1,7 @@
 {
-  "name": "@altshift/fix",
+  "name": "@ariamend/fix",
   "version": "0.0.0",
-  "description": "AltShift fix engine: triage, agent loop, gates and evidence.",
+  "description": "Ariamend fix engine: triage, agent loop, gates and evidence.",
   "license": "MIT",
   "type": "module",
   "exports": {
@@ -21,9 +21,10 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.8.0",
-    "@altshift/adapters": "workspace:*",
-    "altshift": "workspace:*",
+    "@ariamend/adapters": "workspace:*",
+    "@ariamend/core": "workspace:*",
     "playwright": "^1.65.1",
     "zod": "^4.6.7"
-  }
+  },
+  "private": true
 }

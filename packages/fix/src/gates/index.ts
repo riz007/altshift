@@ -23,4 +23,4 @@ export async function runGates(steps: ReadonlyArray<() => GateResult | Promise<G
   }
   return { passed: results.length > 0, results };
 }
-export * from "./vue-template.js";
+export * from "./vue-sfc.js";

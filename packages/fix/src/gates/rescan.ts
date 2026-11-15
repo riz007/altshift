@@ -1,4 +1,4 @@
-import type { Finding, ScanFailure, ScannedCheckpoint } from "altshift";
+import type { Finding, ScanFailure, ScannedCheckpoint } from "@ariamend/core";
 import type { GateResult } from "../types.js";
 
 export interface RescanInput {

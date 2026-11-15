@@ -1,4 +1,4 @@
-import type { Finding } from "altshift";
+import type { Finding } from "@ariamend/core";
 import { describe, expect, it } from "vitest";
 import { type RescanInput, rescanGate } from "./rescan.js";
 

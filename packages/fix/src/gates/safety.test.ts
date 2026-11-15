@@ -1,5 +1,12 @@
+import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { safetyGate } from "./safety.js";
+import { loadSfcParser } from "./vue-sfc.js";
+
+// The gate reads templates with the project's own Vue compiler. The fixture storefront has one installed.
+const parser = loadSfcParser(fileURLToPath(new URL("../../../../fixtures/nuxt-app", import.meta.url)));
+if (!parser) throw new Error("vue/compiler-sfc not found: run pnpm install");
+const parse = parser;
 
 const BEFORE = `<script setup lang="ts">
 const open = ref(false);
@@ -26,7 +33,7 @@ const gift = ref(false);
 </style>
 `;
 const FILE = "app/components/Cart.vue";
-const gate = (after: string, path = FILE, before = BEFORE) => safetyGate([{ path, before, after }]);
+const gate = (after: string, path = FILE, before = BEFORE) => safetyGate([{ path, before, after }], parse);
 const edit = (from: string, to: string) => {
   if (!BEFORE.includes(from)) throw new Error(`test setup: "${from}" is not in the fixture`);
   return gate(BEFORE.replace(from, to));
@@ -247,11 +254,7 @@ describe("safetyGate: hiding or removing instead of fixing", () => {
 
   it("names what it rejected", () => {
     const result = edit('<img class="hero" src="/hero.png" />', "");
-    expect(result.detail.split("\n")).toEqual([
-      `${FILE}: removes 1 <img> element(s). Fix the element instead of removing it`,
-      `${FILE}: removes 1 element(s) overall`,
-      `${FILE}: removes or changes a handler, directive or other attribute (src=/hero.png)`,
-    ]);
+    expect(result.detail).toBe(`${FILE}: removes, moves or rewrites <img>. Fix it in place instead`);
   });
 });
 
@@ -299,7 +302,7 @@ describe("safetyGate: findings from the second review", () => {
     );
     expect(gate(guard)).toMatchObject({
       passed: false,
-      detail: expect.stringContaining("handler, directive or other attribute"),
+      detail: expect.stringContaining("removes, moves or rewrites <button>"),
     });
 
     const handler = BEFORE.replace(' @click="gift = !gift"', "").replace(
@@ -327,7 +330,7 @@ describe("safetyGate: findings from the second review", () => {
     });
   });
 
-  it("flags a name taken from other text, and the removal of a naming attribute", () => {
+  it("flags a name taken from other text and the removal of a name, and rejects removing an id", () => {
     const named = edit('<img class="hero"', '<img aria-labelledby="cart-title" class="hero"');
     expect(named).toMatchObject({
       passed: true,
@@ -335,16 +338,212 @@ describe("safetyGate: findings from the second review", () => {
       detail: expect.stringContaining('text from "cart-title"'),
     });
 
-    const removed = edit(' id="cart-title"', "");
-    expect(removed).toMatchObject({
+    const before = BEFORE.replace('<img class="hero"', '<img aria-label="Hero" class="hero"');
+    const removedName = gate(BEFORE, FILE, before);
+    expect(removedName).toMatchObject({
       passed: true,
       flagged: true,
-      detail: expect.stringContaining("removes id=cart-title"),
+      detail: expect.stringContaining('removes aria-label="Hero"'),
+    });
+
+    // Labels, scripts and CSS hook into ids.
+    expect(edit(' id="cart-title"', "")).toMatchObject({
+      passed: false,
+      detail: expect.stringContaining('removes id="cart-title"'),
     });
   });
 
   it("notes an unchecked translation key", () => {
     const result = edit(BUTTON, BUTTON.replace("@click", ":aria-label=\"$t('cart.close')\" @click"));
     expect(result.detail).toContain("The translation key was not checked.");
+  });
+});
+
+describe("safetyGate: findings from the third review", () => {
+  const PAYLOAD = "Object.constructor('return process')()";
+
+  it.each([
+    ["a short comment that hides an interpolation", "Gift wrap", `Gift wrap<!-->{{ ${PAYLOAD} }}<!-- -->`],
+    ["an interpolation hidden in <title> content", "<ul", `<title><!--</title>{{ ${PAYLOAD} }}<title>--></title><ul`],
+    [
+      "an interpolation hidden in an attribute inside <title>",
+      "<ul",
+      `<title><span title="</title>{{ ${PAYLOAD} }}<title>"></span></title><ul`,
+    ],
+    [
+      "an interpolation hidden in CDATA",
+      '<path d="M6 6l12 12" />',
+      `<![CDATA[<title title="]]>{{ ${PAYLOAD} }}"></title>`,
+    ],
+    ["any new comment", "<ul", "<!-- note --><ul"],
+  ])("rejects %s", (_name, from, to) => {
+    expect(edit(from, to).passed).toBe(false);
+  });
+
+  it("rejects swapping classes between two elements", () => {
+    const before = BEFORE.replace(
+      "<ul",
+      '<div class="hidden">Promo</div><div class="checkout"><button type="submit">Pay</button></div><ul',
+    );
+    const after = BEFORE.replace(
+      "<ul",
+      '<div class="checkout">Promo</div><div class="hidden"><button type="submit">Pay</button></div><ul',
+    );
+    expect(gate(after, FILE, before).passed).toBe(false);
+  });
+
+  it("rejects moving an element inside an existing v-if block", () => {
+    const before = BEFORE.replace(
+      "<ul",
+      '<div v-if="open"><span>Loading</span></div><button type="submit">Pay</button><ul',
+    );
+    const after = BEFORE.replace(
+      "<ul",
+      '<div v-if="open"><span>Loading</span><button type="submit">Pay</button></div><ul',
+    );
+    expect(gate(after, FILE, before).passed).toBe(false);
+  });
+
+  it("rejects swapping handlers between two buttons", () => {
+    const before = BEFORE.replace(
+      "<ul",
+      '<button @click="open = true">Add</button><button @click="open = false">Clear</button><ul',
+    );
+    const after = BEFORE.replace(
+      "<ul",
+      '<button @click="open = false">Add</button><button @click="open = true">Clear</button><ul',
+    );
+    expect(gate(after, FILE, before).passed).toBe(false);
+  });
+
+  it("rejects reordering so v-else belongs to a different v-if", () => {
+    const before = BEFORE.replace("<ul", '<p v-if="open">A</p><p v-else>B</p><span v-if="gift">C</span><ul');
+    const after = BEFORE.replace("<ul", '<span v-if="gift">C</span><p v-else>B</p><p v-if="open">A</p><ul');
+    expect(gate(after, FILE, before).passed).toBe(false);
+  });
+
+  it("rejects swapping for between two labels", () => {
+    const before = BEFORE.replace("<ul", '<label for="a">Email</label><label for="b">Name</label><ul');
+    const after = BEFORE.replace("<ul", '<label for="b">Email</label><label for="a">Name</label><ul');
+    expect(gate(after, FILE, before).passed).toBe(false);
+  });
+
+  it.each([
+    ["changing an input's type", '<input id="email" type="email" />', '<input id="email" type="hidden" />'],
+    ["changing a button's type", '<button type="button">Clear</button>', '<button type="reset">Clear</button>'],
+    ["adding a name to a field", '<input id="email" type="email" />', '<input id="email" type="email" name="token" />'],
+    ["adding a type other than button", '<input id="email" />', '<input id="email" type="hidden" />'],
+  ])("rejects %s", (_name, from, to) => {
+    const before = BEFORE.replace("<ul", `${from}<ul`);
+    expect(gate(before.replace(from, to), FILE, before).passed).toBe(false);
+  });
+
+  it("allows adding type=button to a button that has none", () => {
+    const before = BEFORE.replace("<ul", "<button>Clear</button><ul");
+    expect(gate(before.replace("<button>Clear", '<button type="button">Clear'), FILE, before).passed).toBe(true);
+  });
+
+  it.each([
+    [
+      "a role that hides a container's children",
+      '<ul class="specs">',
+      '<ul class="specs" role="img" aria-label="Specs">',
+    ],
+    ["aria-owns", '<img class="hero"', '<img aria-owns="cart-title" class="hero"'],
+    ["a call to t() when the template has no t", BUTTON, BUTTON.replace("@click", ":aria-label=\"t('close')\" @click")],
+  ])("rejects %s", (_name, from, to) => {
+    expect(edit(from, to).passed).toBe(false);
+  });
+
+  it("allows role=img on an svg with shapes inside", () => {
+    expect(edit('<svg viewBox="0 0 24 24">', '<svg role="img" aria-label="Close" viewBox="0 0 24 24">').passed).toBe(
+      true,
+    );
+  });
+
+  it.each([
+    [
+      "a <template> string in the script",
+      "const open = ref(false);",
+      "const open = ref(false); const demo = '<template><b/></template>';",
+    ],
+    ["a second top-level template", "<style scoped>", "<template><i /></template>\n\n<style scoped>"],
+    ["src on the template tag", "<template>\n  <div", '<template src="./other.html">\n  <div'],
+    [
+      "custom delimiters in the script",
+      "const gift = ref(false);",
+      "const gift = ref(false);\ndefineOptions({ delimiters: ['[[', ']]'] });",
+    ],
+  ])("rejects %s", (_name, from, to) => {
+    expect(edit(from, to).passed).toBe(false);
+  });
+
+  it("accepts the ordinary fixes: a list item in place of a row, an inserted item, and a visible label", () => {
+    const list = BEFORE.replace(
+      '<ul class="specs"><li>One</li></ul>',
+      '<ul class="specs"><div class="row">One</div></ul>',
+    );
+    expect(gate(list.replace('<div class="row">One</div>', '<li class="row">One</li>'), FILE, list).passed).toBe(true);
+    expect(edit("<li>One</li>", "<li>Zero</li><li>One</li>").passed).toBe(true);
+
+    const field = BEFORE.replace("<ul", '<input class="email" type="email" /><ul');
+    const labelled = field.replace(
+      '<input class="email"',
+      '<label for="email-field">Email</label><input id="email-field" class="email"',
+    );
+    expect(gate(labelled, FILE, field)).toMatchObject({ passed: true, flagged: true });
+  });
+});
+
+describe("safetyGate on the fixture storefront", () => {
+  // The fixes the model produced in the last eval run, applied to the real fixture files.
+  const root = new URL("../../../../fixtures/nuxt-app/", import.meta.url);
+  const fixes: Array<[string, string, string]> = [
+    ["app/pages/checkout.vue", 'role="checkbox" tabindex="0"', 'role="checkbox" tabindex="0" :aria-checked="giftWrap"'],
+    [
+      "app/components/CartDrawer.vue",
+      'class="icon-button cart-drawer__close"',
+      'class="icon-button cart-drawer__close" aria-label="Close cart"',
+    ],
+    [
+      "app/components/ProductCard.vue",
+      ':aria-pressed="saved"',
+      ':aria-label="`Save ${product.name} to wishlist`" :aria-pressed="saved"',
+    ],
+    ["app/pages/products/[slug].vue", 'src="/images/lifestyle.svg"', 'src="/images/lifestyle.svg" alt=""'],
+    [
+      "app/components/NewsletterForm.vue",
+      '<input v-model="email"',
+      '<label for="newsletter-email">Email</label>\n      <input id="newsletter-email" v-model="email"',
+    ],
+    [
+      "app/components/PromoBanner.vue",
+      'class="icon-button promo__link"',
+      'class="icon-button promo__link" aria-label="View the Canvas Day Pack"',
+    ],
+    [
+      "app/components/SpecList.vue",
+      '<div v-for="[label, value] in specs" :key="label" class="specs__row">',
+      '<li v-for="[label, value] in specs" :key="label" class="specs__row">',
+    ],
+    [
+      "app/components/SizePicker.vue",
+      '<span class="size-picker__label">Size</span>',
+      '<span id="size-picker-label" class="size-picker__label">Size</span>',
+    ],
+  ];
+
+  it.each(fixes)("accepts the model's fix in %s", async (path, from, to) => {
+    const { readFile } = await import("node:fs/promises");
+    const before = await readFile(new URL(path, root), "utf8");
+    expect(before).toContain(from);
+    let after = before.replace(from, to);
+    if (path.endsWith("SpecList.vue")) after = after.replace("    </div>\n  </ul>", "    </li>\n  </ul>");
+    if (path.endsWith("SizePicker.vue"))
+      after = after.replace('<select v-model="size"', '<select v-model="size" aria-labelledby="size-picker-label"');
+
+    const result = safetyGate([{ path, before, after }], parse);
+    expect(result.detail).not.toContain("removes, moves or rewrites");
+    expect(result.passed).toBe(true);
   });
 });

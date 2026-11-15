@@ -1,7 +1,7 @@
 {
-  "name": "altshift",
+  "name": "@ariamend/core",
   "version": "0.0.0",
-  "description": "AltShift core: config, scan engine, findings and fingerprints.",
+  "description": "Ariamend core: config, scan engine, findings and fingerprints. Internal.",
   "license": "MIT",
   "type": "module",
   "exports": {
@@ -22,5 +22,6 @@
     "@axe-core/playwright": "^4.14.0",
     "playwright": "^1.65.1",
     "zod": "^4.6.7"
-  }
+  },
+  "private": true
 }

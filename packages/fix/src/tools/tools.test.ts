@@ -1,4 +1,4 @@
-import type { Finding } from "altshift";
+import type { Finding } from "@ariamend/core";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { createProject, type TestProject } from "../../test/project.js";
 import { EditSession } from "../session.js";

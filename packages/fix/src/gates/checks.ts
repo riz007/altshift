@@ -1,4 +1,4 @@
-import { type CommandResult, runCommand } from "altshift";
+import { type CommandResult, runCommand } from "@ariamend/core";
 import type { GateResult } from "../types.js";
 
 const OUTPUT_LIMIT = 3000;

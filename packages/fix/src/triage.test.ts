@@ -1,5 +1,5 @@
-import type { SourceHint } from "@altshift/adapters";
-import type { Finding, Impact } from "altshift";
+import type { SourceHint } from "@ariamend/adapters";
+import type { Finding, Impact } from "@ariamend/core";
 import { describe, expect, it } from "vitest";
 import { triage } from "./triage.js";
 

@@ -36,7 +36,7 @@ describe("scrubbedEnv", () => {
       PATH: "/bin",
       NODE_ENV: "development",
       ANTHROPIC_API_KEY: "a",
-      ALTSHIFT_LICENSE_KEY: "b",
+      ARIAMEND_LICENSE_KEY: "b",
       GITHUB_TOKEN: "c",
       "INPUT_ANTHROPIC-API-KEY": "d",
     });

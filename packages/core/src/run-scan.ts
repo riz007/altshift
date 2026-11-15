@@ -28,7 +28,7 @@ export async function runScan(options: RunScanOptions): Promise<Result<ScanRun>>
   const { config, root } = loaded.value;
 
   if (config.app.dev === undefined) {
-    return fail("config-invalid", "app.dev is required: AltShift scans a dev build that it starts itself.");
+    return fail("config-invalid", "app.dev is required: Ariamend scans a dev build that it starts itself.");
   }
   if (config.scan.engine !== "axe") {
     return fail("engine-unavailable", `The "${config.scan.engine}" engine is not available yet. Use "axe".`);

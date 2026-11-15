@@ -1,7 +1,7 @@
 {
-  "name": "@altshift/adapters",
+  "name": "@ariamend/adapters",
   "version": "0.0.0",
-  "description": "Framework detection and source hints for altshift.",
+  "description": "Framework detection and source hints for ariamend.",
   "license": "MIT",
   "type": "module",
   "exports": {
@@ -19,7 +19,8 @@
     "typecheck": "tsc --noEmit -p ."
   },
   "dependencies": {
-    "altshift": "workspace:*",
+    "@ariamend/core": "workspace:*",
     "playwright": "^1.65.1"
-  }
+  },
+  "private": true
 }

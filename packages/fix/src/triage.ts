@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
-import type { SourceHint } from "@altshift/adapters";
-import type { Finding, Impact } from "altshift";
+import type { SourceHint } from "@ariamend/adapters";
+import type { Finding, Impact } from "@ariamend/core";
 import { type FixTier, tierFor } from "./rule-tiers.js";
 import type { FindingGroup } from "./types.js";
 
@@ -9,7 +9,7 @@ export interface TriageInput {
   /** Source hints per fingerprint, best first. */
   hints: ReadonlyMap<string, readonly SourceHint[]>;
   ruleTiers?: Readonly<Record<string, FixTier>>;
-  /** Fingerprints already covered by an open AltShift pull request. */
+  /** Fingerprints already covered by an open Ariamend pull request. */
   coveredByOpenPr?: ReadonlySet<string>;
   maxGroups: number;
 }

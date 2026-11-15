@@ -1,6 +1,6 @@
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
-import { nuxtAdapter, type SourceHint } from "@altshift/adapters";
+import { nuxtAdapter, type SourceHint } from "@ariamend/adapters";
 import {
   axeEngine,
   type Finding,
@@ -9,7 +9,7 @@ import {
   type ScanReport,
   scanTargets,
   startDevServer,
-} from "altshift";
+} from "@ariamend/core";
 import { chromium } from "playwright";
 import { beforeAll, describe, expect, it } from "vitest";
 
@@ -100,7 +100,7 @@ describe("nuxt fixture scan", () => {
     for (const seed of seeds) {
       const source = await readFile(resolve(root, seed.file), "utf8");
       expect(source, `${seed.file} is missing its ${seed.ruleId} seed comment`).toContain(
-        `altshift-seed: ${seed.ruleId} `,
+        `ariamend-seed: ${seed.ruleId} `,
       );
     }
   });

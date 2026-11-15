@@ -1,6 +1,6 @@
 import { realpath, stat } from "node:fs/promises";
 import { posix, relative, resolve, sep } from "node:path";
-import { matchesAny } from "altshift";
+import { matchesAny } from "@ariamend/core";
 
 export interface PathPolicy {
   /** Absolute path of the project root. */

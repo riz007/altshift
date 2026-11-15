@@ -1,10 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  type EvalCase,
-  evalCaseSchema,
-  scoreCase,
-  summarize,
-} from "./evals.js";
+import { type EvalCase, evalCaseSchema, scoreCase, summarize } from "./evals.js";
 import type { Attempt, FixOutcome, FixRunReport, GateResult } from "./types.js";
 
 const FILE = "app/components/CartDrawer.vue";
@@ -13,25 +8,13 @@ const group = {
   ruleId: "button-name",
   tier: "auto" as const,
   hints: [],
-  findings: [
-    { ruleId: "button-name", target: "cart-open", checkpoint: "drawer" },
-  ] as never,
+  findings: [{ ruleId: "button-name", target: "cart-open", checkpoint: "drawer" }] as never,
 };
-const gate = (
-  name: GateResult["gate"],
-  passed = true,
-  detail = "",
-): GateResult => ({ gate: name, passed, detail });
+const gate = (name: GateResult["gate"], passed = true, detail = ""): GateResult => ({ gate: name, passed, detail });
 const attempt = (extra: Partial<Attempt> = {}): Attempt => ({
   model: "claude-fable-5-2",
   edits: [],
-  gates: [
-    gate("scope"),
-    gate("safety"),
-    gate("checks"),
-    gate("rescan"),
-    gate("visual"),
-  ],
+  gates: [gate("scope"), gate("safety"), gate("checks"), gate("rescan"), gate("visual")],
   costUsd: 0.1,
   stopReason: "finish",
   ...extra,
@@ -56,9 +39,7 @@ const report = (...outcomes: FixOutcome[]): FixRunReport => ({
   dryRun: true,
   outcomes,
   skippedFindings: { reportTier: 0, openPr: 0, limit: 0 },
-  totalCostUsd: outcomes
-    .flatMap((outcome) => outcome.attempts)
-    .reduce((sum, item) => sum + item.costUsd, 0),
+  totalCostUsd: outcomes.flatMap((outcome) => outcome.attempts).reduce((sum, item) => sum + item.costUsd, 0),
   budgetUsd: 5,
   models: ["claude-fable-5-2"],
   promptVersion: "0.2.0",
@@ -87,11 +68,7 @@ describe("scoreCase", () => {
       costUsd: 0.1,
       reasons: [],
       gateFailures: [],
-      diff: [
-        FILE,
-        '- <button class="close">',
-        '+ <button class="close" aria-label="Close cart">',
-      ],
+      diff: [FILE, '- <button class="close">', '+ <button class="close" aria-label="Close cart">'],
     });
   });
 
@@ -109,25 +86,19 @@ describe("scoreCase", () => {
       status: "rejected",
       failedGate: "visual",
     });
-    expect(result.reasons[0]).toBe(
-      "expected accepted, got rejected: The visual gate failed",
-    );
+    expect(result.reasons[0]).toBe("expected accepted, got rejected: The visual gate failed");
 
     const failed = attempt({
       gates: [gate("scope"), gate("safety", false, "adds v-html\nmore")],
     });
     const retried: FixOutcome = { ...accepted, attempts: [failed, attempt()] };
-    expect(scoreCase(testCase, report(retried)).gateFailures).toEqual([
-      "safety: adds v-html",
-    ]);
+    expect(scoreCase(testCase, report(retried)).gateFailures).toEqual(["safety: adds v-html"]);
   });
 
   it("fails when the fix touches another file or misses a required string", () => {
     const wrong: FixOutcome = {
       ...accepted,
-      changes: [
-        { path: "app/pages/index.vue", before: "<a>", after: '<a title="x">' },
-      ],
+      changes: [{ path: "app/pages/index.vue", before: "<a>", after: '<a title="x">' }],
     };
     expect(scoreCase(testCase, report(wrong)).reasons).toEqual([
       "changed app/pages/index.vue, which the case does not allow",
@@ -146,9 +117,7 @@ describe("scoreCase", () => {
         },
       ],
     };
-    expect(scoreCase(testCase, report(hidden)).reasons).toEqual([
-      'the fix adds "aria-hidden=\\"true\\""',
-    ]);
+    expect(scoreCase(testCase, report(hidden)).reasons).toEqual(['the fix adds "aria-hidden=\\"true\\""']);
   });
 
   it("only looks at added lines, not at what the file already had", () => {
@@ -176,18 +145,13 @@ describe("scoreCase", () => {
         flagged: true,
       },
     });
-    expect(scoreCase(strict, report(accepted)).reasons).toEqual([
-      "the fix was not marked for human review",
-    ]);
+    expect(scoreCase(strict, report(accepted)).reasons).toEqual(["the fix was not marked for human review"]);
 
     const flagged: FixOutcome = {
       ...accepted,
       attempts: [
         attempt({
-          gates: [
-            gate("scope"),
-            { gate: "safety", passed: true, flagged: true, detail: "" },
-          ],
+          gates: [gate("scope"), { gate: "safety", passed: true, flagged: true, detail: "" }],
         }),
       ],
       changes: [

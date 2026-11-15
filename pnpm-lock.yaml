@@ -33,15 +33,18 @@ importers:
         specifier: 3.5.45
         version: 3.5.45(typescript@6.0.3)
     devDependencies:
-      '@altshift/adapters':
+      '@ariamend/adapters':
         specifier: workspace:*
         version: link:../../packages/adapters
-      '@altshift/fix':
-        specifier: workspace:*
-        version: link:../../packages/fix
-      altshift:
+      '@ariamend/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@ariamend/fix':
+        specifier: workspace:*
+        version: link:../../packages/fix
+      ariamend:
+        specifier: workspace:*
+        version: link:../../packages/cli
       playwright:
         specifier: ^1.65.1
         version: 1.65.1
@@ -51,19 +54,22 @@ importers:
       '@actions/core':
         specifier: ^3.0.1
         version: 3.0.1
-      '@altshift/fix':
-        specifier: workspace:*
-        version: link:../fix
-      '@altshift/github':
-        specifier: workspace:*
-        version: link:../github
-      altshift:
+      '@ariamend/core':
         specifier: workspace:*
         version: link:../core
+      '@ariamend/fix':
+        specifier: workspace:*
+        version: link:../fix
+      '@ariamend/github':
+        specifier: workspace:*
+        version: link:../github
+      zod:
+        specifier: ^4.6.7
+        version: 4.6.7
 
   packages/adapters:
     dependencies:
-      altshift:
+      '@ariamend/core':
         specifier: workspace:*
         version: link:../core
       playwright:
@@ -72,12 +78,37 @@ importers:
 
   packages/cli:
     dependencies:
-      '@altshift/fix':
+      '@actions/core':
+        specifier: ^3.0.1
+        version: 3.0.1
+      '@actions/github':
+        specifier: ^9.1.1
+        version: 9.1.1
+      '@anthropic-ai/sdk':
+        specifier: ^1.8.0
+        version: 1.8.0(zod@4.6.7)
+      '@axe-core/playwright':
+        specifier: ^4.14.0
+        version: 4.14.0(playwright-core@1.65.1)
+      playwright:
+        specifier: ^1.65.1
+        version: 1.65.1
+      zod:
+        specifier: ^4.6.7
+        version: 4.6.7
+    devDependencies:
+      '@ariamend/action':
         specifier: workspace:*
-        version: link:../fix
-      altshift:
+        version: link:../action
+      '@ariamend/core':
         specifier: workspace:*
         version: link:../core
+      '@ariamend/fix':
+        specifier: workspace:*
+        version: link:../fix
+      '@ariamend/github':
+        specifier: workspace:*
+        version: link:../github
 
   packages/core:
     dependencies:
@@ -93,13 +124,13 @@ importers:
 
   packages/fix:
     dependencies:
-      '@altshift/adapters':
-        specifier: workspace:*
-        version: link:../adapters
       '@anthropic-ai/sdk':
         specifier: ^1.8.0
         version: 1.8.0(zod@4.6.7)
-      altshift:
+      '@ariamend/adapters':
+        specifier: workspace:*
+        version: link:../adapters
+      '@ariamend/core':
         specifier: workspace:*
         version: link:../core
       playwright:
@@ -114,7 +145,7 @@ importers:
       '@actions/github':
         specifier: ^9.1.1
         version: 9.1.1
-      altshift:
+      '@ariamend/core':
         specifier: workspace:*
         version: link:../core
 

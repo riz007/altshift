@@ -1,20 +1,26 @@
-name: AltShift
+name: Ariamend
 description: Fixes accessibility findings in storefront source code and opens one pull request with gated fixes and an evidence pack.
-author: Rizwanul Islam Rudra
+author: Rudra
 branding:
   icon: check-circle
   color: blue
 
+# The Action runs the copy of ariamend your project installed (pnpm add -D ariamend), so the version
+# is the one your lockfile pins and nothing is downloaded while the job holds your secrets.
+
 inputs:
   mode:
-    description: "debt (scheduled or manual run) or pr"
+    description: "debt (scheduled or manual run). pr is not available yet"
     default: debt
   config:
-    description: Config path
-    default: altshift.config.ts
+    description: Config path, relative to the repository root
+    default: ariamend.config.ts
+  working-directory:
+    description: Folder whose node_modules has ariamend installed, relative to the repository root
+    default: "."
   anthropic-api-key:
     description: Anthropic API key (bring your own key)
-    required: false
+    required: true
   license-key:
     description: Reserved for a later hosted plan
     required: false
@@ -51,15 +57,25 @@ outputs:
 runs:
   using: composite
   steps:
-    # Pin this to the lockfile's Playwright version once the Action ships.
-    - name: Install Chromium for Playwright
+    - name: Find ariamend
       shell: bash
-      run: npx -y playwright@1 install --with-deps chromium
+      working-directory: ${{ inputs.working-directory }}
+      run: |
+        if [ ! -x node_modules/.bin/ariamend ]; then
+          echo "::error::ariamend is not installed in '${PWD}'. Add it as a devDependency and install your dependencies before this step."
+          exit 1
+        fi
 
-    - name: Run AltShift
+    - name: Install Chromium
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: node_modules/.bin/ariamend install-browser --with-deps
+
+    - name: Run Ariamend
       id: run
       shell: bash
-      run: node "$GITHUB_ACTION_PATH/packages/action/dist/index.js"
+      working-directory: ${{ inputs.working-directory }}
+      run: node_modules/.bin/ariamend action
       # Composite actions do not set INPUT_* on their own.
       env:
         INPUT_MODE: ${{ inputs.mode }}

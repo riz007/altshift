@@ -1,6 +1,6 @@
 // Journeys reach states a plain page load cannot. Stop before placing an order,
 // and use test products and test payment details only.
-import { defineJourney } from "altshift";
+import { defineJourney } from "ariamend";
 
 export default defineJourney({
   name: "cart-open",

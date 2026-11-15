@@ -24,7 +24,7 @@ function submit() {
       <div class="field">
         <label for="checkout-email">Email</label>
         <input id="checkout-email" v-model="form.email" type="email" autocomplete="email" :aria-invalid="!!errors.email" :aria-describedby="errors.email ? 'checkout-email-error' : undefined" />
-        <!-- altshift-seed: color-contrast error text colour is too light on white, on all three fields -->
+        <!-- ariamend-seed: color-contrast error text colour is too light on white, on all three fields -->
         <p v-if="errors.email" id="checkout-email-error" class="field-error">{{ errors.email }}</p>
       </div>
 
@@ -40,7 +40,7 @@ function submit() {
         <p v-if="errors.address" id="checkout-address-error" class="field-error">{{ errors.address }}</p>
       </div>
 
-      <!-- altshift-seed: aria-required-attr custom checkbox never exposes aria-checked -->
+      <!-- ariamend-seed: aria-required-attr custom checkbox never exposes aria-checked -->
       <div class="gift-wrap" role="checkbox" tabindex="0" @click="giftWrap = !giftWrap" @keydown.space.prevent="giftWrap = !giftWrap">
         <span class="gift-wrap__box" :class="{ 'gift-wrap__box--on': giftWrap }" aria-hidden="true" />
         Add gift wrap (€3)

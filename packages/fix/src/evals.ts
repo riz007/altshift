@@ -54,10 +54,7 @@ export interface EvalSummary {
   fallbacks: number;
 }
 
-export function scoreCase(
-  testCase: EvalCase,
-  report: FixRunReport,
-): CaseResult {
+export function scoreCase(testCase: EvalCase, report: FixRunReport): CaseResult {
   const outcome = report.outcomes.find((item) =>
     item.group.findings.some(
       (finding) =>
@@ -81,13 +78,8 @@ export function scoreCase(
 
   const reasons: string[] = [];
   if (outcome.status !== testCase.expect.outcome) {
-    const why =
-      outcome.status === "rejected" || outcome.status === "skipped"
-        ? `: ${outcome.reason}`
-        : "";
-    reasons.push(
-      `expected ${testCase.expect.outcome}, got ${outcome.status}${why}`,
-    );
+    const why = outcome.status === "rejected" || outcome.status === "skipped" ? `: ${outcome.reason}` : "";
+    reasons.push(`expected ${testCase.expect.outcome}, got ${outcome.status}${why}`);
   }
 
   const diff: string[] = [];
@@ -100,37 +92,25 @@ export function scoreCase(
         ...lines.added.map((line) => `+ ${line.trim()}`),
       );
     }
-    const added = outcome.changes
-      .map((change) => lineDiff(change.before, change.after).added.join("\n"))
-      .join("\n");
+    const added = outcome.changes.map((change) => lineDiff(change.before, change.after).added.join("\n")).join("\n");
     const allowed = testCase.expect.files;
     for (const change of outcome.changes) {
       if (allowed.length > 0 && !allowed.includes(change.path))
         reasons.push(`changed ${change.path}, which the case does not allow`);
     }
     for (const text of testCase.expect.mustContain)
-      if (!added.includes(text))
-        reasons.push(`the fix does not add ${JSON.stringify(text)}`);
+      if (!added.includes(text)) reasons.push(`the fix does not add ${JSON.stringify(text)}`);
     for (const text of testCase.expect.mustNotContain)
-      if (added.includes(text))
-        reasons.push(`the fix adds ${JSON.stringify(text)}`);
+      if (added.includes(text)) reasons.push(`the fix adds ${JSON.stringify(text)}`);
     for (const pattern of testCase.expect.mustNotMatch) {
-      if (new RegExp(pattern, "i").test(added))
-        reasons.push(`the fix matches /${pattern}/`);
+      if (new RegExp(pattern, "i").test(added)) reasons.push(`the fix matches /${pattern}/`);
     }
     const final = outcome.changes.map((change) => change.after).join("\n");
     for (const text of testCase.expect.mustKeep) {
-      if (!final.includes(text))
-        reasons.push(`the fix lost ${JSON.stringify(text)}`);
+      if (!final.includes(text)) reasons.push(`the fix lost ${JSON.stringify(text)}`);
     }
-    const safety = outcome.attempts
-      .at(-1)
-      ?.gates.find((gate) => gate.gate === "safety");
-    if (
-      testCase.expect.flagged &&
-      outcome.status === "accepted" &&
-      !safety?.flagged
-    ) {
+    const safety = outcome.attempts.at(-1)?.gates.find((gate) => gate.gate === "safety");
+    if (testCase.expect.flagged && outcome.status === "accepted" && !safety?.flagged) {
       reasons.push("the fix was not marked for human review");
     }
   }
@@ -139,19 +119,12 @@ export function scoreCase(
     id: testCase.id,
     passed: reasons.length === 0,
     status: outcome.status,
-    ...(outcome.status === "rejected" && outcome.failedGate
-      ? { failedGate: outcome.failedGate }
-      : {}),
+    ...(outcome.status === "rejected" && outcome.failedGate ? { failedGate: outcome.failedGate } : {}),
     attempts: outcome.attempts.length,
-    costUsd: outcome.attempts.reduce(
-      (sum, attempt) => sum + attempt.costUsd,
-      0,
-    ),
+    costUsd: outcome.attempts.reduce((sum, attempt) => sum + attempt.costUsd, 0),
     reasons,
     gateFailures: outcome.attempts.flatMap((attempt) =>
-      attempt.gates
-        .filter((gate) => !gate.passed)
-        .map((gate) => `${gate.gate}: ${gate.detail.split("\n")[0]}`),
+      attempt.gates.filter((gate) => !gate.passed).map((gate) => `${gate.gate}: ${gate.detail.split("\n")[0]}`),
     ),
     diff,
   };
@@ -162,26 +135,13 @@ export function summarize(
   results: readonly CaseResult[],
   reports: readonly FixRunReport[],
 ): EvalSummary {
-  const attempts = reports.flatMap((report) =>
-    report.outcomes.flatMap((outcome) => outcome.attempts),
-  );
-  const gated = attempts.filter((attempt) =>
-    attempt.gates.some((gate) => gate.gate === "rescan"),
-  );
+  const attempts = reports.flatMap((report) => report.outcomes.flatMap((outcome) => outcome.attempts));
+  const gated = attempts.filter((attempt) => attempt.gates.some((gate) => gate.gate === "rescan"));
   const regressed = gated.filter((attempt) =>
-    attempt.gates.some(
-      (gate) =>
-        gate.gate === "rescan" &&
-        !gate.passed &&
-        gate.detail.includes("new findings"),
-    ),
+    attempt.gates.some((gate) => gate.gate === "rescan" && !gate.passed && gate.detail.includes("new findings")),
   );
-  const wantFix = cases
-    .filter((item) => item.expect.outcome === "accepted")
-    .map((item) => item.id);
-  const fixed = results.filter(
-    (result) => wantFix.includes(result.id) && result.passed,
-  );
+  const wantFix = cases.filter((item) => item.expect.outcome === "accepted").map((item) => item.id);
+  const fixed = results.filter((result) => wantFix.includes(result.id) && result.passed);
   const accepted = reports
     .flatMap((report) => report.outcomes)
     .filter((outcome) => outcome.status === "accepted").length;
@@ -195,8 +155,7 @@ export function summarize(
     regressionRate: gated.length > 0 ? regressed.length / gated.length : null,
     costUsd,
     costPerAcceptedFixUsd: accepted > 0 ? costUsd / accepted : null,
-    refusals: attempts.filter((attempt) => attempt.stopReason === "refusal")
-      .length,
+    refusals: attempts.filter((attempt) => attempt.stopReason === "refusal").length,
     fallbacks: Math.max(0, fallbackModels - 1),
   };
 }

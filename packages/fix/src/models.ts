@@ -28,12 +28,8 @@ export function resolveModels(
   env: Record<string, string | undefined> = process.env,
 ): ModelRouting {
   return {
-    fix: env.ALTSHIFT_MODEL_FIX || fromConfig.fix || DEFAULT_MODELS.fix,
-    triage:
-      env.ALTSHIFT_MODEL_TRIAGE || fromConfig.triage || DEFAULT_MODELS.triage,
-    fallback:
-      env.ALTSHIFT_MODEL_FALLBACK ||
-      fromConfig.fallback ||
-      DEFAULT_MODELS.fallback,
+    fix: env.ARIAMEND_MODEL_FIX || fromConfig.fix || DEFAULT_MODELS.fix,
+    triage: env.ARIAMEND_MODEL_TRIAGE || fromConfig.triage || DEFAULT_MODELS.triage,
+    fallback: env.ARIAMEND_MODEL_FALLBACK || fromConfig.fallback || DEFAULT_MODELS.fallback,
   };
 }

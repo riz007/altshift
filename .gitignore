@@ -12,8 +12,8 @@ coverage/
 docs/internal/
 .claude/settings.local.json
 
-# altshift run output
-.altshift/
+# ariamend run output
+.ariamend/
 test-results/
 playwright-report/
 
@@ -23,9 +23,13 @@ evals/runs/
 .DS_Store
 .vscode/*
 !.vscode/extensions.json
+!.vscode/settings.json
 .idea/
 
 # fixture build output
 .nuxt/
 .output/
 .data/
+
+# copied from packages/fix at build time
+packages/cli/prompts/

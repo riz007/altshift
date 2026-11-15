@@ -1,4 +1,4 @@
-import type { CommandResult } from "altshift";
+import type { CommandResult } from "@ariamend/core";
 import { describe, expect, it } from "vitest";
 import type { FileChange } from "../diff.js";
 import type { GateResult } from "../types.js";

@@ -8,11 +8,11 @@ Instructions for any coding agent working in this repo (Claude Code, Codex, Curs
 
 ## Project
 
-AltShift burns down accessibility debt in storefront source code. On a schedule it scans pages in a dev build, uses Claude Fable 5.2 to fix the findings it can, proves each fix with deterministic gates, and opens one PR with an evidence pack. Nuxt and Vue come first, then Next.js.
+Ariamend burns down accessibility debt in storefront source code. On a schedule it scans pages in a dev build, uses Claude Fable 5.2 to fix the findings it can, proves each fix with deterministic gates, and opens one PR with an evidence pack. Nuxt and Vue come first, then Next.js.
 
 We do not sell detection. Free tools already do that. We scan only so the fix engine has findings and so the rescan gate can work.
 
-**Current milestone: M2 is built and waiting for the maintainer's review** (Nuxt adapter, agent tools, gates, agent loop, `altshift fix --dry-run`, evals). M3 is next: pull request delivery, the evidence pack and the Action (`docs/internal/SPEC.md` section 17). Do not start it until the maintainer asks. The M0 kill test runs in parallel by maintainer decision, and its work lives in `docs/internal/research/m0/`.
+**Current milestone: M3 is built and waiting for the maintainer's review** (evidence pack, pull request delivery, the Action, the fixture workflow, and the one public `ariamend` package). Only the maintainer publishes or tags anything. The M0 kill test runs in parallel by maintainer decision, and its work lives in `docs/internal/research/m0/`.
 
 The whole repo is MIT licensed.
 
@@ -23,7 +23,7 @@ packages/core/      config, targets, journeys, scan engines, findings, fingerpri
 packages/adapters/  framework detection, dev-server source hints, prompt notes
 packages/fix/       triage, localize, agent loop, tools, gates, model routing, pricing, evidence pack
 packages/github/    PR creation and updates, suggestions, Markdown escaping
-packages/cli/       altshift command
+packages/cli/       the public `ariamend` package: CLI and config API. Bundles the rest
 packages/action/    GitHub Action entry (root action.yml calls it)
 fixtures/           small storefront apps with seeded violations
 evals/              fix eval cases and results
@@ -31,7 +31,7 @@ docs/               user docs
 docs/internal/      SPEC.md, DECISIONS.md and M0 research (git-ignored)
 ```
 
-Dependencies flow one way: `core` ← `adapters` ← `fix` ← `cli` and `action`. `github` depends on `core` only. `core` never imports from `fix`.
+Dependencies flow one way: `core` ← `adapters` ← `fix` ← `action` ← `cli`. Only `cli` (npm name `ariamend`) is published; it bundles the others, so the public types in `packages/cli/src/api.ts` are written out by hand and checked against core by `api.check.ts`. `github` depends on `core` only. `core` never imports from `fix`.
 
 Workspace packages resolve each other's `src/` through the `source` export condition, so typecheck and tests work without a build.
 
@@ -99,7 +99,7 @@ These need a `docs/internal/SPEC.md` update, a version bump, a migration note, r
 ## Testing
 
 - Every behaviour change gets a unit test. Add a fixture when browser behaviour matters.
-- Test failure paths too: bad config, scan failures, gate failures, refusals, budget exhaustion, an already-open AltShift PR.
+- Test failure paths too: bad config, scan failures, gate failures, refusals, budget exhaustion, an already-open Ariamend PR.
 - Never weaken or delete a test to make it pass. Fix flaky tests or report them. No blind retries.
 - Run the narrowest useful tests while working, then `pnpm check` before finishing.
 

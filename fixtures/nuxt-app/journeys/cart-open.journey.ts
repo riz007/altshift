@@ -1,4 +1,4 @@
-import { defineJourney } from "altshift";
+import { defineJourney } from "ariamend";
 
 export default defineJourney({
   name: "cart-open",

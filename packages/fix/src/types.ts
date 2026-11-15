@@ -1,16 +1,9 @@
-import type { SourceHint } from "@altshift/adapters";
-import type { Finding } from "altshift";
+import type { SourceHint } from "@ariamend/adapters";
+import type { Finding } from "@ariamend/core";
 import type { FileChange } from "./diff.js";
 import type { FixTier } from "./rule-tiers.js";
 
-export const GATES = [
-  "scope",
-  "safety",
-  "checks",
-  "rescan",
-  "visual",
-  "build",
-] as const;
+export const GATES = ["scope", "safety", "checks", "rescan", "visual", "build"] as const;
 export type GateName = (typeof GATES)[number];
 
 export interface GateResult {
@@ -42,14 +35,7 @@ export interface Attempt {
   edits: StagedEdit[];
   gates: GateResult[];
   costUsd: number;
-  stopReason:
-    | "finish"
-    | "give_up"
-    | "refusal"
-    | "max_turns"
-    | "max_tokens"
-    | "budget"
-    | "error";
+  stopReason: "finish" | "give_up" | "refusal" | "max_turns" | "max_tokens" | "budget" | "error";
   /** The model's own summary, or its reason for giving up. Model output: escape before rendering. */
   summary?: string;
 }

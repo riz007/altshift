@@ -1,17 +1,10 @@
 import type Anthropic from "@anthropic-ai/sdk";
 import { FIX_EFFORT, MAX_OUTPUT_TOKENS } from "./models.js";
 import { costUsd, requirePrice } from "./pricing.js";
-import {
-  runTool,
-  toolDefinitions,
-  type ToolContext,
-  type ToolEnd,
-} from "./tools/index.js";
+import { runTool, type ToolContext, type ToolEnd, toolDefinitions } from "./tools/index.js";
 
 /** One Messages API call. The real client and the recording player both fit this. */
-export type ModelClient = (
-  request: Anthropic.MessageCreateParamsNonStreaming,
-) => Promise<Anthropic.Message>;
+export type ModelClient = (request: Anthropic.MessageCreateParamsNonStreaming) => Promise<Anthropic.Message>;
 
 export type AgentStop =
   | { reason: "finish"; end: Extract<ToolEnd, { kind: "finish" }> }
@@ -42,9 +35,7 @@ export class Agent {
   costUsd = 0;
   private readonly messages: Anthropic.MessageParam[] = [];
   /** The finish call waiting for a verdict, with results for any calls made in the same turn. */
-  private pending:
-    | { finishId: string; others: Anthropic.ToolResultBlockParam[] }
-    | undefined;
+  private pending: { finishId: string; others: Anthropic.ToolResultBlockParam[] } | undefined;
   private turns = 0;
 
   constructor(private readonly options: AgentOptions) {
@@ -59,8 +50,7 @@ export class Agent {
 
   /** Answer the finish call that ended the last attempt with the gate's verdict, and let the model try again. */
   resume(context: ToolContext, feedback: string): Promise<AgentStop> {
-    if (this.pending === undefined)
-      throw new Error("resume() needs an attempt that ended with finish.");
+    if (this.pending === undefined) throw new Error("resume() needs an attempt that ended with finish.");
     // Every tool call of a turn must be answered in one message.
     this.messages.push({
       role: "user",
@@ -128,9 +118,7 @@ export class Agent {
 
       // Thinking blocks must go back unchanged, so the whole content is kept, not just the text.
       this.messages.push({ role: "assistant", content: response.content });
-      const calls = response.content.filter(
-        (block): block is Anthropic.ToolUseBlock => block.type === "tool_use",
-      );
+      const calls = response.content.filter((block): block is Anthropic.ToolUseBlock => block.type === "tool_use");
 
       if (calls.length === 0) {
         if (reminded)
@@ -141,8 +129,7 @@ export class Agent {
         reminded = true;
         this.messages.push({
           role: "user",
-          content:
-            "End the task by calling finish (with staged edits) or give_up.",
+          content: "End the task by calling finish (with staged edits) or give_up.",
         });
         continue;
       }
@@ -184,8 +171,7 @@ export class Agent {
         this.messages.push({ role: "user", content: results });
         continue;
       }
-      if (end.value.kind === "give_up")
-        return { reason: "give_up", message: end.value.reason };
+      if (end.value.kind === "give_up") return { reason: "give_up", message: end.value.reason };
 
       // The finish call stays open until resume() answers it with the gates' verdict.
       this.pending = { finishId: end.id, others: results };
@@ -198,9 +184,9 @@ export class Agent {
   }
 }
 
-/** The real client. Reads ANTHROPIC_API_KEY from the environment. */
-export async function anthropicClient(): Promise<ModelClient> {
+/** The real client. Uses the given key, or ANTHROPIC_API_KEY from the environment. */
+export async function anthropicClient(apiKey?: string): Promise<ModelClient> {
   const { default: AnthropicSdk } = await import("@anthropic-ai/sdk");
-  const sdk = new AnthropicSdk();
+  const sdk = apiKey ? new AnthropicSdk({ apiKey }) : new AnthropicSdk();
   return (request) => sdk.messages.create(request);
 }

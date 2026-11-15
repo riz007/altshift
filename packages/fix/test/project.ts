@@ -20,7 +20,7 @@ export const CART = `<template>
 
 /** A throwaway project on disk. Paths in `files` are repo-relative. */
 export async function createProject(files: Record<string, string> = {}): Promise<TestProject> {
-  const root = await mkdtemp(join(tmpdir(), "altshift-fix-"));
+  const root = await mkdtemp(join(tmpdir(), "ariamend-fix-"));
   const all = {
     "app/components/CartDrawer.vue": CART,
     "app/assets/main.css": ":root {\n  --brand: #0b5d4e;\n  --ink: #1f2933;\n}\n",

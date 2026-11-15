@@ -1,4 +1,4 @@
-import { defineConfig } from "altshift";
+import { defineConfig } from "ariamend";
 
 export default defineConfig({
   app: {

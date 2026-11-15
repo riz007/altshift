@@ -11,19 +11,12 @@ const PROMPT_FILE = new URL("../prompts/fix-agent.md", import.meta.url);
 /** Load the versioned system prompt and fill in the framework notes. */
 export async function loadFixPrompt(adapterNotes: string): Promise<FixPrompt> {
   const raw = await readFile(PROMPT_FILE, "utf8");
-  const header =
-    /^<!--\s*prompt:\s*fix-agent\s*\|\s*version:\s*([\d.]+)[^>]*-->\s*/.exec(
-      raw,
-    );
-  if (!header?.[1])
-    throw new Error("packages/fix/prompts/fix-agent.md has no version line.");
-  if (!raw.includes("{{adapterNotes}}"))
-    throw new Error("fix-agent.md has no {{adapterNotes}} placeholder.");
+  const header = /^<!--\s*prompt:\s*fix-agent\s*\|\s*version:\s*([\d.]+)[^>]*-->\s*/.exec(raw);
+  if (!header?.[1]) throw new Error("packages/fix/prompts/fix-agent.md has no version line.");
+  if (!raw.includes("{{adapterNotes}}")) throw new Error("fix-agent.md has no {{adapterNotes}} placeholder.");
   return {
     version: header[1],
-    system: raw
-      .slice(header[0].length)
-      .replace("{{adapterNotes}}", () => adapterNotes),
+    system: raw.slice(header[0].length).replace("{{adapterNotes}}", () => adapterNotes),
   };
 }
 
@@ -33,10 +26,7 @@ export function groupMessage(group: FindingGroup): string {
     (finding) =>
       `- id ${finding.fingerprint}: ${finding.target} (${finding.checkpoint}), selector ${JSON.stringify(finding.selector)}`,
   );
-  const hints = group.hints.map(
-    (hint) =>
-      `- ${hint.file ?? hint.component} (confidence ${hint.confidence})`,
-  );
+  const hints = group.hints.map((hint) => `- ${hint.file ?? hint.component} (confidence ${hint.confidence})`);
   return [
     `Fix this finding group. Rule: ${group.ruleId}. Tier: ${group.tier}.`,
     group.tier === "suggest"

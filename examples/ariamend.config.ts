@@ -1,5 +1,5 @@
 // Example config for a Nuxt storefront.
-import { defineConfig } from "altshift";
+import { defineConfig } from "ariamend";
 
 export default defineConfig({
   app: {

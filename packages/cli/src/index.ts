@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { readFileSync } from "node:fs";
 import { parseEnv } from "node:util";
-import { ExitCode } from "altshift";
+import { ExitCode } from "@ariamend/core";
 import { main } from "./run.js";
 
 // Local runs keep the API key in .env.local. Only that one name is taken from the file, and never in CI:
@@ -25,7 +25,7 @@ main(process.argv.slice(2), {
     process.exitCode = code;
   },
   (error: unknown) => {
-    process.stderr.write(`altshift: ${error instanceof Error ? (error.stack ?? error.message) : String(error)}\n`);
+    process.stderr.write(`ariamend: ${error instanceof Error ? (error.stack ?? error.message) : String(error)}\n`);
     process.exitCode = ExitCode.Failure;
   },
 );

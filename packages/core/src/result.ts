@@ -6,20 +6,21 @@ export type ErrorCode =
   | "browser"
   | "engine-unavailable"
   | "nothing-to-scan"
-  | "run-failed";
+  | "run-failed"
+  | "delivery";
 
-export interface AltshiftError {
+export interface AriamendError {
   code: ErrorCode;
   message: string;
 }
 
-export type Result<T> = { ok: true; value: T } | { ok: false; error: AltshiftError };
+export type Result<T> = { ok: true; value: T } | { ok: false; error: AriamendError };
 
 export function ok<T>(value: T): Result<T> {
   return { ok: true, value };
 }
 
-export function fail(code: ErrorCode, message: string): { ok: false; error: AltshiftError } {
+export function fail(code: ErrorCode, message: string): { ok: false; error: AriamendError } {
   return { ok: false, error: { code, message } };
 }
 

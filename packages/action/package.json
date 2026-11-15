@@ -1,18 +1,26 @@
 {
-  "name": "@altshift/action",
+  "name": "@ariamend/action",
   "version": "0.0.0",
-  "description": "GitHub Action entry for altshift. Bundled to dist on release.",
+  "description": "Ariamend GitHub Action entry. Internal: bundled into the ariamend package.",
   "license": "MIT",
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "tsup src/index.ts --format esm --clean",
+    "build": "tsup src/main.ts --format esm --dts --clean",
     "typecheck": "tsc --noEmit -p ."
   },
   "dependencies": {
     "@actions/core": "^3.0.1",
-    "@altshift/fix": "workspace:*",
-    "@altshift/github": "workspace:*",
-    "altshift": "workspace:*"
+    "@ariamend/core": "workspace:*",
+    "@ariamend/fix": "workspace:*",
+    "@ariamend/github": "workspace:*",
+    "zod": "^4.6.7"
+  },
+  "exports": {
+    ".": {
+      "source": "./src/main.ts",
+      "types": "./dist/main.d.ts",
+      "import": "./dist/main.js"
+    }
   }
 }
