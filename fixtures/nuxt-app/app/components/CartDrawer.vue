@@ -8,7 +8,7 @@ const { lines, open, total } = useCart();
       <div class="cart-drawer__header">
         <h2 id="cart-drawer-title" class="cart-drawer__title">Your cart</h2>
         <!-- ariamend-seed: button-name icon-only close button -->
-        <button type="button" class="icon-button cart-drawer__close" @click="open = false">
+        <button type="button" class="icon-button cart-drawer__close" aria-label="Close cart" @click="open = false">
           <svg aria-hidden="true" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M6 6l12 12M18 6L6 18" />
           </svg>
